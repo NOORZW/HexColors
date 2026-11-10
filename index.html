@@ -205,6 +205,31 @@
   .trophy.locked .trophy-art { filter: grayscale(1) brightness(0.75); opacity: 0.5; }
   .trophy.locked { border-style: dashed; }
 
+  /* Trophy tiers */
+  .tier-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 28px 0 0; }
+  .tier-head h3 { margin: 0; font-size: 1.25rem; color: var(--title, var(--bg-ink, var(--ink))); }
+  .tier-head span { opacity: 0.75; font-size: 0.9rem; }
+  .tier-note { margin: 4px 0 0; opacity: 0.8; font-size: 0.9rem; }
+  .tier-chip { align-self: center; font-size: 0.68rem; font-weight: 700; line-height: 1.5; padding: 0 9px; border-radius: 99px; border: 2px solid #14171c; color: #14171c; background: #dfe5f2; }
+  .tier-chip.rare { background: #bfe0ff; }
+  .tier-chip.legendary { background: #e1ccff; }
+  .tier-chip.mythic { background: #ffd6a0; }
+  .tier-chip.secret { background: #14171c; color: #ffffff; border-color: #ffffff; }
+  .trophy.t-legendary { box-shadow: 4px 4px 0 var(--edge), 0 0 0 3px #a06cff; }
+  .trophy.t-mythic { box-shadow: 4px 4px 0 var(--edge), 0 0 0 3px #ffb02e, 0 0 18px rgba(255, 176, 46, 0.55); }
+  .trophy.t-secret { box-shadow: 4px 4px 0 var(--edge), 0 0 0 3px #7b61ff; }
+
+  /* Leaderboard */
+  .lb-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .lb-list { list-style: none; margin: 12px 0 0; padding: 0; }
+  .lb-row { display: grid; grid-template-columns: 34px 38px 1fr auto; align-items: center; gap: 10px; padding: 6px 6px; border-bottom: 2px solid var(--edge); }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-row.me { background: rgba(108, 76, 255, 0.16); border-radius: 10px; }
+  .lb-rank { font-weight: 700; text-align: center; }
+  .lb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-score { font-weight: 700; }
+  .lb-note { color: var(--muted); font-size: 0.9rem; margin: 10px 0 0; }
+
   /* Party effects */
   #backdrop { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
   #strobe { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0; }
@@ -470,12 +495,33 @@
   <section class="view" id="v-trophies" hidden>
     <a class="back" href="#home">← All games</a>
     <h2><span data-art="trophies" data-size="46"></span> Trophy Room</h2>
-    <p class="sub">Every trophy has its own art. Locked ones show how to win them.</p>
+    <p class="sub">Every trophy has its own art. Locked ones show how to win them, except the secret ones.</p>
     <div class="panel">
       <div class="score"><span id="trophy-summary"></span></div>
       <div class="timebar" style="margin-bottom:0"><div id="trophy-bar" style="width:0"></div></div>
     </div>
-    <div class="trophy-grid" id="trophy-grid"></div>
+    <div id="trophy-sections"></div>
+  </section>
+
+  <!-- LEADERBOARD -->
+  <section class="view" id="v-leaderboard" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="leaderboard" data-size="46"></span> Leaderboard</h2>
+    <p class="sub">See how you rank against players around the world. Names are made up by the game.</p>
+    <div class="panel">
+      <div class="score"><span>You are <b id="lb-name"></b></span></div>
+      <div class="row" style="margin-top:0">
+        <button class="btn" id="lb-rename" type="button"><span data-icon="dice"></span> New name</button>
+      </div>
+      <div class="lb-tabs" id="lb-tabs"></div>
+      <p class="lb-note" id="lb-status" aria-live="polite"></p>
+      <ol class="lb-list" id="lb-list"></ol>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">Your scores on this device</h3>
+      <div class="score" id="lb-mine"></div>
+      <p class="lb-note">Only a made-up name, a score and a badge are ever sent. Nothing personal.</p>
+    </div>
   </section>
 
 </main>
@@ -729,6 +775,261 @@ const ART = {
   ].join(""))
 };
 
+// ----- Tiered medals and helpers for the harder trophies -----
+function starburst(n, rOuter, rInner) {
+  const pts = [];
+  for (let i = 0; i < n * 2; i++) {
+    const r = i % 2 === 0 ? rOuter : rInner;
+    const a = Math.PI * i / n - Math.PI / 2;
+    pts.push((32 + r * Math.cos(a)).toFixed(1) + "," + (32 + r * Math.sin(a)).toFixed(1));
+  }
+  return pts.join(" ");
+}
+const shrink = (inner, s) => '<g transform="translate(32 32) scale(' + s + ') translate(-32 -32)">' + inner + '</g>';
+function gear(cx, cy, r, teeth, fill) {
+  let s = '<g fill="' + fill + '">';
+  for (let i = 0; i < teeth; i++) {
+    s += '<rect x="' + (cx - 3) + '" y="' + (cy - r - 5) + '" width="6" height="9" rx="1.5" transform="rotate(' + (360 / teeth * i) + ' ' + cx + ' ' + cy + ')"/>';
+  }
+  return s + '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '"/></g>';
+}
+const sparkle4 = (x, y, s, fill) =>
+  '<path d="M' + x + ' ' + (y - s) + ' L' + (x + s * 0.3) + ' ' + (y - s * 0.3) + ' L' + (x + s) + ' ' + y + ' L' + (x + s * 0.3) + ' ' + (y + s * 0.3) +
+  ' L' + x + ' ' + (y + s) + ' L' + (x - s * 0.3) + ' ' + (y + s * 0.3) + ' L' + (x - s) + ' ' + y + ' L' + (x - s * 0.3) + ' ' + (y - s * 0.3) + ' Z" fill="' + fill + '" stroke-width="2"/>';
+const dotRow = (xs, y, color) => xs.map((x) => '<circle cx="' + x + '" cy="' + y + '" r="2" fill="' + color + '" stroke="none"/>').join("");
+
+// Legendary: gold ring. Mythic: spiky gold star behind the medal. Secret: dark disc with purple dashes.
+const medalL = (bg, inner) =>
+  '<circle cx="32" cy="32" r="29" fill="' + bg + '"/>' +
+  '<circle cx="32" cy="32" r="25" fill="none" stroke="#ffc933" stroke-width="4"/>' +
+  shrink(inner, 0.8);
+const medalM = (bg, inner) =>
+  '<polygon points="' + starburst(14, 30.5, 26) + '" fill="#ffd43b"/>' +
+  '<circle cx="32" cy="32" r="24" fill="' + bg + '"/>' +
+  '<circle cx="32" cy="32" r="20.5" fill="none" stroke="#ffffff" stroke-opacity="0.8" stroke-width="2" stroke-dasharray="2 4"/>' +
+  shrink(inner, 0.66);
+const medalS = (inner) =>
+  '<circle cx="32" cy="32" r="29" fill="#3a2d66"/>' +
+  '<circle cx="32" cy="32" r="25" fill="none" stroke="#b79cff" stroke-width="2.5" stroke-dasharray="4 4"/>' +
+  shrink(inner, 0.8);
+
+Object.assign(ART, {
+  leaderboard: [
+    '<rect x="22" y="24" width="20" height="32" fill="#ffd43b"/>',
+    '<rect x="4" y="36" width="18" height="20" fill="#c8cedd"/>',
+    '<rect x="42" y="42" width="18" height="14" fill="#e0a066"/>',
+    '<polygon points="32,4 34.5,10.5 41,11 36,15.5 37.5,22 32,18.5 26.5,22 28,15.5 23,11 29.5,10.5" fill="#ffd43b" stroke-width="2"/>',
+    '<path d="M32 32 V46" fill="none" stroke-width="3.5"/>'
+  ].join(""),
+
+  // ----- Legendary -----
+  "streak-30": medalL("#ffd6c9", [
+    '<rect x="27" y="8" width="10" height="34" rx="5" fill="#fff"/>',
+    '<circle cx="32" cy="46" r="9" fill="#ff4d4d"/>',
+    '<rect x="30" y="18" width="4" height="28" fill="#ff4d4d" stroke="none"/>',
+    '<path d="M40 14 H46 M40 22 H44 M40 30 H46" fill="none" stroke-width="2.5"/>'
+  ].join("")),
+  "fast-10": medalL("#ffe8a3", [
+    '<rect x="27" y="8" width="10" height="6" rx="2" fill="#bfc6d4"/>',
+    '<circle cx="32" cy="36" r="19" fill="#fff"/>',
+    '<path d="M32 36 L42 27" fill="none" stroke-width="3.5"/>',
+    '<circle cx="32" cy="36" r="2.5" fill="#14171c" stroke="none"/>',
+    '<path d="M32 21 V24 M47 36 H44 M32 51 V48 M17 36 H20" fill="none" stroke-width="2.5"/>',
+    '<path d="M46 14 L50 10" fill="none" stroke-width="3"/>'
+  ].join("")),
+  "hexmath-40": medalL("#e0f2d0", [
+    '<rect x="9" y="12" width="46" height="40" rx="5" fill="#f6d7a6"/>',
+    '<path d="M9 24 H55 M9 34 H55 M9 44 H55" fill="none" stroke-width="2"/>',
+    '<circle cx="18" cy="24" r="4" fill="#ff5c5c"/><circle cx="27" cy="24" r="4" fill="#ff5c5c"/><circle cx="44" cy="24" r="4" fill="#ff5c5c"/>',
+    '<circle cx="22" cy="34" r="4" fill="#4d8dff"/><circle cx="38" cy="34" r="4" fill="#4d8dff"/><circle cx="47" cy="34" r="4" fill="#4d8dff"/>',
+    '<circle cx="16" cy="44" r="4" fill="#3ddc84"/><circle cx="32" cy="44" r="4" fill="#3ddc84"/>'
+  ].join("")),
+  "odd-30": medalL("#dcd3ff", [
+    '<rect x="14" y="14" width="12" height="9" rx="3" fill="#5a6bd0"/>',
+    '<rect x="38" y="14" width="12" height="9" rx="3" fill="#5a6bd0"/>',
+    '<rect x="27" y="28" width="10" height="8" fill="#5a6bd0"/>',
+    '<circle cx="20" cy="38" r="13" fill="#8aa0ff"/>',
+    '<circle cx="44" cy="38" r="13" fill="#8aa0ff"/>',
+    '<circle cx="20" cy="38" r="7" fill="#d7e3ff"/>',
+    '<circle cx="44" cy="38" r="7" fill="#d7e3ff"/>',
+    '<path d="M16 35 A5 5 0 0 1 20 33" fill="none" stroke="#ffffff" stroke-width="2"/>'
+  ].join("")),
+  oddclean: medalL("#d9f7ef", [
+    '<path d="M44 6 L28 34" fill="none" stroke-width="8"/>',
+    '<path d="M44 6 L28 34" fill="none" stroke="#c68c53" stroke-width="3.5"/>',
+    '<path d="M18 36 L36 30 L42 46 L12 58 Z" fill="#ffd43b"/>',
+    '<path d="M21 41 L17 54 M28 38 L25 51 M35 35 L33 47" fill="none" stroke-width="2"/>',
+    sparkle4(50, 38, 7, "#ffffff"),
+    sparkle4(52, 54, 4, "#ffffff")
+  ].join("")),
+  "match-100": medalL("#ffe3f1", [
+    '<rect x="6" y="18" width="22" height="28" rx="5" fill="#7c5cff"/>',
+    '<rect x="36" y="18" width="22" height="28" rx="5" fill="#7c5cff"/>',
+    '<path d="M29.5 27 H34.5 M29.5 37 H34.5" fill="none" stroke-width="3.5"/>',
+    '<path d="M11 24 V30 M41 24 V30" fill="none" stroke="#ffffff" stroke-opacity="0.7" stroke-width="2.5"/>'
+  ].join("")),
+  "match-3x": medalL("#ffe0e0", [
+    '<circle cx="15" cy="32" r="9" fill="#fff"/><circle cx="15" cy="32" r="5" fill="#ff5c5c"/><circle cx="15" cy="32" r="1.8" fill="#14171c" stroke="none"/>',
+    '<circle cx="32" cy="32" r="9" fill="#fff"/><circle cx="32" cy="32" r="5" fill="#ff5c5c"/><circle cx="32" cy="32" r="1.8" fill="#14171c" stroke="none"/>',
+    '<circle cx="49" cy="32" r="9" fill="#fff"/><circle cx="49" cy="32" r="5" fill="#ff5c5c"/><circle cx="49" cy="32" r="1.8" fill="#14171c" stroke="none"/>'
+  ].join("")),
+  "triple-crown": medalL("#fff0c2", [
+    '<path d="M10 46 L12 20 L24 32 L32 16 L40 32 L52 20 L54 46 Z" fill="#ffd43b"/>',
+    '<rect x="10" y="46" width="44" height="9" rx="2.5" fill="#ff9f1a"/>',
+    '<circle cx="20" cy="50.5" r="2.8" fill="#ff5c5c" stroke-width="2"/>',
+    '<circle cx="32" cy="50.5" r="2.8" fill="#4d8dff" stroke-width="2"/>',
+    '<circle cx="44" cy="50.5" r="2.8" fill="#3ddc84" stroke-width="2"/>'
+  ].join("")),
+  "correct-500": medalL("#dde3ee", [
+    gear(32, 32, 14, 8, "#aab4c8"),
+    '<circle cx="32" cy="32" r="7.5" fill="#fff"/>',
+    '<path d="M28 32 L31 35 L37 28.5" fill="none" stroke-width="2.8"/>'
+  ].join("")),
+  "pop-5000": medalL("#ffe9b8", [
+    '<rect x="8" y="12" width="48" height="42" rx="9" fill="#d8dff0"/>',
+    '<rect x="14" y="16" width="36" height="30" rx="6" fill="#f4f6fc"/>',
+    '<path d="M30 16 L26 28 L34 30 L28 46" fill="none" stroke-width="3"/>',
+    '<path d="M14 9 L18 13 M50 9 L46 13 M56 30 H61" fill="none" stroke="#ff9f1a" stroke-width="2.5"/>'
+  ].join("")),
+  "palettes-2000": medalL("#ffe8c9", [
+    '<circle cx="22" cy="20" r="5" fill="#ff5c5c"/><circle cx="32" cy="14" r="5" fill="#3ddc84"/><circle cx="42" cy="20" r="5" fill="#4d8dff"/><circle cx="32" cy="24" r="4" fill="#ffd43b"/>',
+    '<rect x="10" y="32" width="44" height="22" rx="4" fill="#c68c53"/>',
+    '<path d="M10 32 C10 20 54 20 54 32 Z" fill="#a8703d"/>',
+    '<rect x="27" y="30" width="10" height="12" rx="2" fill="#ffd43b"/>',
+    '<circle cx="32" cy="36" r="1.8" fill="#14171c" stroke="none"/>'
+  ].join("")),
+  "copies-500": medalL("#e0f0ff", [
+    '<rect x="14" y="14" width="36" height="42" rx="5" fill="#fff"/>',
+    '<rect x="23" y="8" width="18" height="10" rx="3" fill="#bfc6d4"/>',
+    '<path d="M20 44 L22 32 L28 38 L32 28 L36 38 L42 32 L44 44 Z" fill="#ffd43b"/>',
+    '<rect x="20" y="44" width="24" height="5" rx="1.5" fill="#ff9f1a"/>'
+  ].join("")),
+  "level-15": medalL("#e9ddff", [
+    '<path d="M20 20 L18 8 L28 16 Z" fill="#a47be8"/><path d="M44 20 L46 8 L36 16 Z" fill="#a47be8"/>',
+    '<ellipse cx="32" cy="36" rx="17" ry="19" fill="#a47be8"/>',
+    '<circle cx="25" cy="30" r="8" fill="#fff"/><circle cx="39" cy="30" r="8" fill="#fff"/>',
+    '<circle cx="25" cy="31" r="3.5" fill="#14171c" stroke="none"/><circle cx="39" cy="31" r="3.5" fill="#14171c" stroke="none"/>',
+    '<path d="M29.5 37 H34.5 L32 42 Z" fill="#ffd43b" stroke-width="2"/>',
+    '<path d="M22 46 C26 50 38 50 42 46" fill="none" stroke-width="2.5"/>'
+  ].join("")),
+  "days-30": medalL("#ffe0cc", [
+    '<rect x="8" y="12" width="40" height="40" rx="5" fill="#fff"/>',
+    '<path d="M8 22 V17 A5 5 0 0 1 13 12 H43 A5 5 0 0 1 48 17 V22 Z" fill="#ff6b6b"/>',
+    '<path d="M18 8 V16 M38 8 V16" fill="none"/>',
+    dotRow([15, 22, 29, 36, 43], 30, "#ff6b6b"),
+    dotRow([15, 22, 29], 40, "#ff6b6b"),
+    '<path d="M48 28 C49 35 57 37 56 46 C55 52 51 55 48 55 C44 55 40 52 40 46 C40 42 43 41 44 36 C46 38 47 34 48 28 Z" fill="#ff7a2f"/>',
+    '<path d="M48 40 C49 44 52 45 51 49 C50 51 49 52 48 52 C46 52 45 50 45 48 C46 45 47 44 48 40 Z" fill="#ffd43b" stroke-width="2"/>'
+  ].join("")),
+
+  // ----- Rare -----
+  "days-14": medal("#cfe8ff", [
+    '<rect x="10" y="14" width="44" height="40" rx="6" fill="#fff"/>',
+    '<path d="M10 24 V20 A6 6 0 0 1 16 14 H48 A6 6 0 0 1 54 20 V24 Z" fill="#4dabf7"/>',
+    '<path d="M22 9 V18 M42 9 V18" fill="none"/>',
+    dotRow([17, 22, 27, 32, 37, 42, 47], 34, "#4dabf7"),
+    dotRow([17, 22, 27, 32, 37, 42, 47], 44, "#4dabf7")
+  ].join("")),
+
+  // ----- Mythic -----
+  "streak-50": medalM("#cfe8ff", [
+    '<path d="M32 8 L50 14 V30 C50 42 42 50 32 56 C22 50 14 42 14 30 V14 Z" fill="#4dabf7"/>',
+    '<polygon points="32,20 35,28 44,28.5 37,34 39.5,43 32,38 24.5,43 27,34 20,28.5 29,28" fill="#fff" stroke-width="2.5"/>'
+  ].join("")),
+  "streak-100": medalM("#d9f6ff", [
+    '<path d="M20 18 H44 L54 28 L32 54 L10 28 Z" fill="#7ee8ff"/>',
+    '<path d="M10 28 H54 M20 18 L26 28 L32 54 M44 18 L38 28 L32 54 M26 28 L32 18 L38 28" fill="none" stroke-width="2.5"/>'
+  ].join("")),
+  "fast-25": medalM("#ffe0d0", [
+    '<path d="M6 34 C18 16 46 16 58 34 C46 52 18 52 6 34 Z" fill="#fff"/>',
+    '<circle cx="32" cy="36" r="10" fill="#4dabf7"/>',
+    '<circle cx="32" cy="36" r="4.5" fill="#14171c" stroke="none"/>',
+    '<path d="M6 34 C18 14 46 14 58 34 C46 28 18 28 6 34 Z" fill="#ffb88c"/>',
+    '<path d="M14 24 L11 18 M24 19 L22 12 M40 19 L42 12 M50 24 L53 18" fill="none" stroke-width="2.5"/>'
+  ].join("")),
+  "odd-45": medalM("#e4ebff", [
+    '<circle cx="28" cy="28" r="19" fill="#fff"/>',
+    '<rect x="16" y="16" width="8" height="8" fill="#a9c1ff" stroke-width="1.5"/><rect x="24" y="16" width="8" height="8" fill="#a9c1ff" stroke-width="1.5"/><rect x="32" y="16" width="8" height="8" fill="#a9c1ff" stroke-width="1.5"/>',
+    '<rect x="16" y="24" width="8" height="8" fill="#a9c1ff" stroke-width="1.5"/><rect x="24" y="24" width="8" height="8" fill="#ff5c5c" stroke-width="1.5"/><rect x="32" y="24" width="8" height="8" fill="#a9c1ff" stroke-width="1.5"/>',
+    '<rect x="16" y="32" width="8" height="8" fill="#a9c1ff" stroke-width="1.5"/><rect x="24" y="32" width="8" height="8" fill="#a9c1ff" stroke-width="1.5"/><rect x="32" y="32" width="8" height="8" fill="#a9c1ff" stroke-width="1.5"/>',
+    '<path d="M42 42 L57 57" fill="none" stroke-width="10"/>',
+    '<path d="M42 42 L57 57" fill="none" stroke="#ff8f2e" stroke-width="4.5"/>'
+  ].join("")),
+  "memory-95": medalM("#e6e0ff", [
+    '<rect x="22" y="12" width="20" height="9" rx="2" fill="#aab4c8"/>',
+    '<rect x="6" y="18" width="52" height="34" rx="7" fill="#cfd6e6"/>',
+    '<circle cx="32" cy="35" r="13" fill="#fff"/>',
+    '<circle cx="32" cy="35" r="8" fill="#4dabf7"/>',
+    '<circle cx="29" cy="32" r="2.5" fill="#fff" stroke="none"/>',
+    '<rect x="11" y="23" width="8" height="5" rx="1.5" fill="#ffd43b" stroke-width="2"/>'
+  ].join("")),
+  "memory-98": medalM("#ffe3f3", [
+    '<path d="M32 12 C26 5 13 8 14 20 C7 22 7 35 14 37 C13 48 24 54 32 47 C40 54 51 48 50 37 C57 35 57 22 50 20 C51 8 38 5 32 12 Z" fill="#ffc2d9"/>',
+    '<path d="M32 12 V47" fill="none"/>',
+    '<path d="M21 26 C26 24 27 31 23 33" fill="none"/>',
+    '<path d="M43 26 C38 24 37 31 41 33" fill="none"/>',
+    '<polygon points="50,6 52,11 57,11.5 53,15 54.5,20 50,17 45.5,20 47,15 43,11.5 48,11" fill="#ffd43b" stroke-width="2"/>'
+  ].join("")),
+  "five-aces": medalM("#dff7e8", [
+    '<rect x="10" y="14" width="22" height="32" rx="4" fill="#fff" transform="rotate(-20 21 30)"/>',
+    '<rect x="32" y="14" width="22" height="32" rx="4" fill="#fff" transform="rotate(20 43 30)"/>',
+    '<rect x="21" y="12" width="22" height="34" rx="4" fill="#fff"/>',
+    '<polygon points="32,20 34.5,26.5 41,27 36,31.5 37.5,38 32,34.5 26.5,38 28,31.5 23,27 29.5,26.5" fill="#ff5c5c" stroke-width="2"/>'
+  ].join("")),
+  "correct-2000": medalM("#e5deff", [
+    '<rect x="14" y="8" width="36" height="48" rx="4" fill="#7c5cff"/>',
+    '<path d="M21 8 V56" fill="none" stroke-width="2.5"/>',
+    '<g fill="none" stroke="#ffffff" stroke-width="2.5"><path d="M33 20 L31 36"/><path d="M41 20 L39 36"/><path d="M28 26 H44"/><path d="M27 32 H43"/></g>',
+    '<path d="M28 46 H44" fill="none" stroke="#ffd43b" stroke-width="3"/>'
+  ].join("")),
+  "pop-25000": medalM("#ffd9d9", [
+    '<polygon points="' + starburst(10, 24, 13) + '" fill="#ffd43b"/>',
+    '<polygon points="' + starburst(10, 15, 8) + '" fill="#ff7a2f"/>',
+    '<rect x="6" y="8" width="12" height="12" rx="3" fill="#e6ecff" transform="rotate(-18 12 14)"/>',
+    '<rect x="46" y="10" width="12" height="12" rx="3" fill="#e6ecff" transform="rotate(22 52 16)"/>',
+    '<rect x="8" y="44" width="12" height="12" rx="3" fill="#e6ecff" transform="rotate(15 14 50)"/>',
+    '<rect x="46" y="44" width="12" height="12" rx="3" fill="#e6ecff" transform="rotate(-25 52 50)"/>'
+  ].join("")),
+  "level-40": medalM("#d9f0ff", [
+    '<path d="M8 44 A24 24 0 0 1 56 44" fill="none" stroke="#ff5c5c" stroke-width="5"/>',
+    '<path d="M13 44 A19 19 0 0 1 51 44" fill="none" stroke="#ffa94d" stroke-width="5"/>',
+    '<path d="M18 44 A14 14 0 0 1 46 44" fill="none" stroke="#ffd43b" stroke-width="5"/>',
+    '<path d="M23 44 A9 9 0 0 1 41 44" fill="none" stroke="#3ddc84" stroke-width="5"/>',
+    '<path d="M28 44 A4 4 0 0 1 36 44" fill="none" stroke="#4d8dff" stroke-width="5"/>',
+    '<path d="M4 52 C2 45 10 43 12 47 C14 43 22 45 20 52 Z" fill="#fff"/>',
+    '<path d="M44 52 C42 45 50 43 52 47 C54 43 62 45 60 52 Z" fill="#fff"/>'
+  ].join("")),
+  "days-100": medalM("#e2f3ff", [
+    '<rect x="14" y="8" width="36" height="6" rx="2" fill="#c68c53"/>',
+    '<rect x="14" y="50" width="36" height="6" rx="2" fill="#c68c53"/>',
+    '<path d="M18 14 H46 C46 28 38 30 38 32 C38 34 46 36 46 50 H18 C18 36 26 34 26 32 C26 30 18 28 18 14 Z" fill="#cdeeff"/>',
+    '<path d="M22 14 H42 C41 22 36 25 32 27 C28 25 23 22 22 14 Z" fill="#ffd43b" stroke="none"/>',
+    '<path d="M24 50 H40 C39 44 35 41 32 40 C29 41 25 44 24 50 Z" fill="#ffd43b" stroke="none"/>'
+  ].join("")),
+  completionist: medalM("#fff0b8", ART.trophies + sparkle4(12, 14, 6, "#ffffff") + sparkle4(52, 12, 5, "#ffffff") + sparkle4(54, 50, 5, "#ffffff")),
+
+  // ----- Secret -----
+  hexspeak: medalS([
+    '<path d="M12 28 H44 V40 C44 48 38 54 28 54 C18 54 12 48 12 40 Z" fill="#fff"/>',
+    '<path d="M44 32 H50 C54 32 54 44 46 44" fill="none" stroke="#ffffff" stroke-width="3.5"/>',
+    '<rect x="15" y="31" width="26" height="6" rx="3" fill="#c68c53" stroke="none"/>',
+    '<path d="M20 22 C18 18 22 16 20 12 M28 22 C26 18 30 16 28 12 M36 22 C34 18 38 16 36 12" fill="none" stroke="#ffffff" stroke-width="2.5"/>'
+  ].join("")),
+  "both-ends": medalS([
+    '<path d="M32 10 A22 22 0 0 0 32 54 Z" fill="#fff"/>',
+    '<path d="M32 10 A22 22 0 0 1 32 54 Z" fill="#14171c"/>',
+    '<circle cx="32" cy="32" r="22" fill="none" stroke="#ffffff" stroke-width="2"/>',
+    '<circle cx="21" cy="32" r="4.5" fill="#14171c" stroke="none"/>',
+    '<circle cx="43" cy="32" r="4.5" fill="#fff" stroke="none"/>'
+  ].join("")),
+  konami: medalS([
+    '<path d="M14 24 H50 C56 24 58 30 56 40 C55 48 50 50 46 46 L42 42 H22 L18 46 C14 50 9 48 8 40 C6 30 8 24 14 24 Z" fill="#9aa5ff"/>',
+    '<path d="M20 28 V40 M14 34 H26" fill="none" stroke="#14171c" stroke-width="4.5"/>',
+    '<circle cx="44" cy="31" r="3.5" fill="#ff5c5c"/>',
+    '<circle cx="50" cy="37" r="3.5" fill="#3ddc84"/>'
+  ].join(""))
+});
+
 function artSvg(name, size, label) {
   const inner = ART[name];
   if (!inner) return "";
@@ -767,6 +1068,7 @@ document.querySelectorAll("[data-icon]").forEach((el) => { el.innerHTML = iconSv
 const $ = (s, r = document) => r.querySelector(s);
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 const rand = () => Math.floor(Math.random() * 256);
+let current = "home";   // which page is showing
 
 const hex2 = (n) => n.toString(16).padStart(2, "0").toUpperCase();          // 255 -> "FF"
 const toHex = (r, g, b) => "#" + hex2(r) + hex2(g) + hex2(b);               // (255,136,0) -> "#FF8800"
@@ -897,6 +1199,7 @@ function addXP(n) {
   save("hx-xp", xp);
   drawXP();
   if (levelOf() > before) toast("Level up! You are now a " + titleOf(levelOf()) + ".");
+  lbSyncAll(false);
   checkTrophies();
 }
 
@@ -907,7 +1210,7 @@ const unlocked = new Set(loadStr("hx-trophies").split(",").filter(Boolean));
 const visited = new Set(loadStr("hx-visited").split(",").filter(Boolean));
 const maxStreak = () => Math.max(load("hx-b-namehex"), load("hx-b-whichcolor"), load("hx-b-hexmath"));
 
-const TROPHIES = [
+const BASE_TROPHIES = [
   { id: "first-steps",  title: "First Steps",      how: "Answer a quiz question right.",            test: () => stat("correct") >= 1 },
   { id: "hot-streak",   title: "Hot Streak",       how: "Get 5 right in a row.",                    test: () => maxStreak() >= 5 },
   { id: "unstoppable",  title: "Unstoppable",      how: "Get 15 right in a row.",                   test: () => maxStreak() >= 15 },
@@ -930,6 +1233,53 @@ const TROPHIES = [
   { id: "opposites",    title: "Opposites Attract", how: "Tap the opposite color in Hex Lab.",      test: () => stat("opp") >= 1 }
 ];
 
+const TIER_XP = { starter: 5, rare: 10, legendary: 25, mythic: 60, secret: 25 };
+const BASE_TIERS = { unstoppable: "rare", century: "rare", bullseye: "rare", "eagle-eye": "rare", elephant: "rare", "hex-whiz": "rare", "emoji-storm": "rare", wizard: "rare" };
+const HEX_WORDS = new Set(["C0FFEE", "BADA55", "DEFACE", "FACADE", "DECADE", "BADF00", "0FF1CE", "ACCEDE", "BEADED"]);
+
+// The hard ones. Mythic trophies are designed to be about 1 in 10,000 hard.
+const HARD_TROPHIES = [
+  // Legendary
+  { id: "streak-30",     tier: "legendary", title: "Heater",           how: "Get 30 right in a row in one quiz.",                          test: () => maxStreak() >= 30 },
+  { id: "fast-10",       tier: "legendary", title: "Quick Draw",       how: "Get 10 right in a row, each in under 2 seconds.",             test: () => load("hx-b-fastA") >= 10 },
+  { id: "hexmath-40",    tier: "legendary", title: "Human Calculator", how: "Get 40 right in a row in Hex Math.",                          test: () => load("hx-b-hexmath") >= 40 },
+  { id: "odd-30",        tier: "legendary", title: "Hawk Vision",      how: "Find 30 odd tiles in one round.",                             test: () => load("hx-b-oddone") >= 30 },
+  { id: "oddclean",      tier: "legendary", title: "Clean Sweep",      how: "Find 20 odd tiles in one round without a single wrong tap.",  test: () => load("hx-b-oddclean") >= 20 },
+  { id: "match-100",     tier: "legendary", title: "Pixel Perfect",    how: "Score a 100% match in Match It.",                             test: () => load("hx-b-matchit") >= 100 },
+  { id: "match-3x",      tier: "legendary", title: "Triple Threat",    how: "Score 98% or better three times in a row in Match It.",       test: () => load("hx-b-matchrun") >= 3 },
+  { id: "triple-crown",  tier: "legendary", title: "Triple Crown",     how: "Get a best streak of 20 in all three quizzes.",               test: () => load("hx-b-namehex") >= 20 && load("hx-b-whichcolor") >= 20 && load("hx-b-hexmath") >= 20 },
+  { id: "correct-500",   tier: "legendary", title: "Quiz Machine",     how: "Answer 500 questions right.",                                 test: () => stat("correct") >= 500 },
+  { id: "pop-5000",      tier: "legendary", title: "Mash Master",      how: "Pop 5,000 things in Keyboard Party.",                         test: () => popped >= 5000 },
+  { id: "palettes-2000", tier: "legendary", title: "Palette Hoarder",  how: "Make 2,000 palettes.",                                        test: () => stat("palettes") >= 2000 },
+  { id: "copies-500",    tier: "legendary", title: "Clipboard King",   how: "Tap a copy button 500 times.",                                test: () => stat("copies") >= 500 },
+  { id: "level-15",      tier: "legendary", title: "Color Sage",       how: "Reach level 15.",                                             test: () => levelOf() >= 15 },
+  { id: "days-30",       tier: "legendary", title: "Monthly Maniac",   how: "Play on 30 days in a row.",                                   test: () => load("hx-b-daystreak") >= 30 },
+  // Rare
+  { id: "days-14",       tier: "rare",      title: "Fortnight",        how: "Play on 14 days in a row.",                                   test: () => load("hx-b-daystreak") >= 14 },
+  // Mythic
+  { id: "streak-50",     tier: "mythic",    title: "Untouchable",      how: "Get 50 right in a row in one quiz.",                          test: () => maxStreak() >= 50 },
+  { id: "streak-100",    tier: "mythic",    title: "Perfect Hundred",  how: "Get 100 right in a row in one quiz.",                         test: () => maxStreak() >= 100 },
+  { id: "fast-25",       tier: "mythic",    title: "Blink",            how: "Get 25 right in a row, each in under 1.5 seconds.",           test: () => load("hx-b-fastB") >= 25 },
+  { id: "odd-45",        tier: "mythic",    title: "Pixel Peeper",     how: "Find 45 odd tiles in one round.",                             test: () => load("hx-b-oddone") >= 45 },
+  { id: "memory-95",     tier: "mythic",    title: "Photographic",     how: "Average 95% in Color Memory.",                                test: () => load("hx-b-memory") >= 95 },
+  { id: "memory-98",     tier: "mythic",    title: "Hex Savant",       how: "Average 98% in Color Memory.",                                test: () => load("hx-b-memory") >= 98 },
+  { id: "five-aces",     tier: "mythic",    title: "Five Aces",        how: "Score 95% or better in all five rounds of one Color Memory game.", test: () => load("hx-b-aces") >= 1 },
+  { id: "correct-2000",  tier: "mythic",    title: "Hex Encyclopedia", how: "Answer 2,000 questions right.",                               test: () => stat("correct") >= 2000 },
+  { id: "pop-25000",     tier: "mythic",    title: "Keyboard Destroyer", how: "Pop 25,000 things in Keyboard Party.",                      test: () => popped >= 25000 },
+  { id: "level-40",      tier: "mythic",    title: "Chroma God",       how: "Reach level 40.",                                             test: () => levelOf() >= 40 },
+  { id: "days-100",      tier: "mythic",    title: "Hundred Days",     how: "Play on 100 days in a row.",                                  test: () => load("hx-b-daystreak") >= 100 },
+  { id: "completionist", tier: "mythic",    title: "Completionist",    how: "Win every other trophy, secret ones too.",                    test: () => TROPHIES.every((t) => t.id === "completionist" || unlocked.has(t.id)) },
+  // Secret: no instructions until you find them
+  { id: "hexspeak",      tier: "secret",    title: "Hexspeak",         how: "Hint: some hex codes spell real words.",  reveal: "Type a hex code that spells a word, like C0FFEE.",  test: () => stat("hexspeak") >= 1 },
+  { id: "both-ends",     tier: "secret",    title: "Both Ends",        how: "Hint: visit the two extremes.",           reveal: "Make pure black and pure white in Hex Lab.",       test: () => load("hx-s-black") >= 1 && load("hx-s-white") >= 1 },
+  { id: "konami",        tier: "secret",    title: "Old School",       how: "Hint: a famous cheat code from classic games.", reveal: "Press up, up, down, down, left, right, left, right, B, A.", test: () => stat("konami") >= 1 }
+];
+
+const TROPHIES = BASE_TROPHIES
+  .map((t) => Object.assign({ tier: BASE_TIERS[t.id] || "starter" }, t))
+  .concat(HARD_TROPHIES)
+  .map((t) => Object.assign({ xp: TIER_XP[t.tier] }, t));
+
 function drawTrophyCount() {
   $("#trophy-count").textContent = unlocked.size + "/" + TROPHIES.length;
 }
@@ -945,10 +1295,11 @@ function checkTrophies() {
     });
     if (fresh.length) {
       saveStr("hx-trophies", [...unlocked].join(","));
-      xp += 5 * fresh.length;                 // each trophy is worth 5 XP
+      xp += fresh.reduce((sum, t) => sum + t.xp, 0);                 // each trophy is worth 5 XP
       save("hx-xp", xp);
       drawXP();
       drawTrophyCount();
+      lbSyncAll(false);
       if (current === "trophies") drawTrophies();
       if (fresh.length === 1) toast("Trophy unlocked: " + fresh[0].title, "", artSvg(fresh[0].id, 38), 3200);
       else toast(fresh.length + " trophies unlocked!", "", artSvg(fresh[0].id, 38), 3200);
@@ -956,18 +1307,48 @@ function checkTrophies() {
   } finally { checking = false; }
 }
 
+const TIER_ORDER = ["starter", "rare", "legendary", "mythic", "secret"];
+const TIER_NAMES = { starter: "Starter", rare: "Rare", legendary: "Legendary", mythic: "Mythic", secret: "Secret" };
+const TIER_NOTES = {
+  legendary: "Seriously hard. Expect to practice a lot.",
+  mythic: "Made to be about 1 in 10,000. That is how hard I designed them, not a count of real players.",
+  secret: "No instructions. You have to find these yourself."
+};
+
 function drawTrophies() {
   $("#trophy-summary").textContent = unlocked.size + " of " + TROPHIES.length + " unlocked";
   $("#trophy-bar").style.width = (unlocked.size / TROPHIES.length * 100) + "%";
-  const grid = $("#trophy-grid");
-  grid.innerHTML = "";
-  TROPHIES.forEach((t) => {
-    const on = unlocked.has(t.id);
-    const card = document.createElement("div");
-    card.className = "trophy " + (on ? "unlocked" : "locked");
-    card.innerHTML = '<div class="trophy-art">' + artSvg(t.id, 88, t.title) + '</div><b>' + t.title + '</b>' +
-      '<span class="how">' + t.how + '</span><span class="status">' + (on ? "Unlocked!" : "Locked") + '</span>';
-    grid.appendChild(card);
+  const box = $("#trophy-sections");
+  box.innerHTML = "";
+  TIER_ORDER.forEach((tier) => {
+    const list = TROPHIES.filter((t) => t.tier === tier);
+    if (!list.length) return;
+    const got = list.filter((t) => unlocked.has(t.id)).length;
+    const head = document.createElement("div");
+    head.className = "tier-head";
+    head.innerHTML = "<h3>" + TIER_NAMES[tier] + "</h3><span>" + got + " of " + list.length + "</span>";
+    box.appendChild(head);
+    if (TIER_NOTES[tier]) {
+      const note = document.createElement("p");
+      note.className = "tier-note";
+      note.textContent = TIER_NOTES[tier];
+      box.appendChild(note);
+    }
+    const grid = document.createElement("div");
+    grid.className = "trophy-grid";
+    list.forEach((t) => {
+      const on = unlocked.has(t.id);
+      const hiddenSecret = t.tier === "secret" && !on;
+      const title = hiddenSecret ? "Secret trophy" : t.title;
+      const how = on && t.reveal ? t.reveal : t.how;
+      const card = document.createElement("div");
+      card.className = "trophy t-" + t.tier + " " + (on ? "unlocked" : "locked");
+      card.innerHTML = '<span class="tier-chip ' + t.tier + '">' + TIER_NAMES[t.tier] + '</span>' +
+        '<div class="trophy-art">' + artSvg(t.id, 88, title) + '</div><b>' + title + '</b>' +
+        '<span class="how">' + how + '</span><span class="status">' + (on ? "Unlocked!" : "Locked") + '</span>';
+      grid.appendChild(card);
+    });
+    box.appendChild(grid);
   });
 }
 
@@ -983,9 +1364,10 @@ const GAMES = [
   { id: "hexmath",    title: "Hex Math",       color: "#da77f2", blurb: "Turn hex pairs into regular numbers." },
   { id: "gradient",   title: "Gradient Maker", color: "#f783ac", blurb: "Build a gradient and copy the CSS." },
   { id: "party",      title: "Keyboard Party", color: "#ff8787", blurb: "Mash the keys. Every emoji. Strobe lights." },
-  { id: "trophies",   title: "Trophy Room",    color: "#ffc078", blurb: "See every trophy you have won and what is left." }
+  { id: "trophies",   title: "Trophy Room",    color: "#ffc078", blurb: "See every trophy you have won and what is left." },
+  { id: "leaderboard", title: "Leaderboard", color: "#9775fa", blurb: "See how you rank against players around the world." }
 ];
-const PLAYABLE = GAMES.filter((g) => g.id !== "trophies");
+const PLAYABLE = GAMES.filter((g) => g.id !== "trophies" && g.id !== "leaderboard");
 const GAME_BY_ID = {};
 GAMES.forEach((g) => { GAME_BY_ID[g.id] = g; });
 
@@ -1057,6 +1439,8 @@ function drawLab(h) {
   hero.style.background = h;
   hero.style.color = textOn(h);
   $("#lab-hex").textContent = h;
+  if (h === "#000000" && !load("hx-s-black")) { save("hx-s-black", 1); checkTrophies(); }
+  if (h === "#FFFFFF" && !load("hx-s-white")) { save("hx-s-white", 1); checkTrophies(); }
   const input = $("#lab-input");
   if (document.activeElement !== input) input.value = h;
 
@@ -1082,7 +1466,7 @@ function setLab(hex) { labCtl.set(hex); }
 
 $("#lab-input").addEventListener("input", (e) => {
   const n = normalizeHex(e.target.value);
-  if (n) { setLab(n); bump("typed"); }
+  if (n) { setLab(n); bump("typed"); if (HEX_WORDS.has(n.slice(1))) bump("hexspeak"); }
 });
 $("#lab-rand").addEventListener("click", () => setLab(randHex()));
 $("#lab-copy").addEventListener("click", () => copyText($("#lab-hex").textContent, "copies"));
@@ -1145,7 +1529,7 @@ document.querySelectorAll("#pal-modes button").forEach((b) => {
 
 // ---------- Quiz helpers (Name That Hex, Which Color, Hex Math) ----------
 function Score(selector, key) {
-  let score = 0, streak = 0;
+  let score = 0, streak = 0, runA = 0, runB = 0;
   const el = $(selector);
   function draw() {
     el.innerHTML = "<span>Score <b>" + score + "</b></span><span>Streak <b>" + streak +
@@ -1153,24 +1537,29 @@ function Score(selector, key) {
   }
   draw();
   return {
-    right() {
+    right(ms) {
       score++; streak++;
+      runA = ms < 2000 ? runA + 1 : 0;
+      runB = ms < 1500 ? runB + 1 : 0;
+      if (runA > load("hx-b-fastA")) save("hx-b-fastA", runA);
+      if (runB > load("hx-b-fastB")) save("hx-b-fastB", runB);
       if (streak > load(key)) save(key, streak);
       addXP(streak >= 5 ? 2 : 1);
       bump("correct");
       draw();
     },
-    wrong() { streak = 0; draw(); },
-    reset() { score = 0; streak = 0; draw(); }
+    wrong() { streak = 0; runA = 0; runB = 0; draw(); },
+    reset() { score = 0; streak = 0; runA = 0; runB = 0; draw(); }
   };
 }
 
+let roundStart = 0;
 function lockAnswer(box, correct, picked, score, feedbackSelector, next) {
   const buttons = [...box.children];
   buttons.forEach((b) => { b.disabled = true; if (b.dataset.v === correct) b.classList.add("right"); });
   const fb = $(feedbackSelector);
   if (picked === correct) {
-    score.right();
+    score.right(performance.now() - roundStart);
     fb.textContent = "Correct!";
   } else {
     score.wrong();
@@ -1182,6 +1571,7 @@ function lockAnswer(box, correct, picked, score, feedbackSelector, next) {
 
 const score1 = Score("#g1-score", "hx-b-namehex");
 function round1() {
+  roundStart = performance.now();
   const color = randHex();
   $("#g1-stage").style.background = color;
   const box = $("#g1-options");
@@ -1199,6 +1589,7 @@ function round1() {
 
 const score2 = Score("#g2-score", "hx-b-whichcolor");
 function round2() {
+  roundStart = performance.now();
   const color = randHex();
   $("#g2-stage").textContent = color;
   const box = $("#g2-options");
@@ -1217,6 +1608,7 @@ function round2() {
 
 const score4 = Score("#g4-score", "hx-b-hexmath");
 function round4() {
+  roundStart = performance.now();
   const n = rand();
   const swapped = parseInt(hex2(n)[1] + hex2(n)[0], 16);     // digits flipped: a common mistake
   const set = new Set([String(n), String(swapped)]);
@@ -1237,7 +1629,7 @@ function round4() {
 
 // ---------- Odd One Out ----------
 const ODD_TIME = 45;
-const odd = { running: false, score: 0, left: ODD_TIME, timer: null, oddIndex: 0 };
+const odd = { running: false, score: 0, left: ODD_TIME, timer: null, oddIndex: 0, wrong: 0 };
 
 function oddDraw() {
   $("#odd-score").innerHTML = "<span>Found <b>" + odd.score + "</b></span><span>Best <b>" + load("hx-b-oddone") + "</b></span><span>Time <b>" + odd.left.toFixed(1) + "</b></span>";
@@ -1271,10 +1663,13 @@ function oddPick(i) {
   if (!odd.running) return;
   if (i === odd.oddIndex) {
     odd.score++;
-    if (odd.score > load("hx-b-oddone")) { save("hx-b-oddone", odd.score); checkTrophies(); }
+    if (odd.wrong === 0 && odd.score > load("hx-b-oddclean")) save("hx-b-oddclean", odd.score);
+    if (odd.score > load("hx-b-oddone")) save("hx-b-oddone", odd.score);
+    checkTrophies();
     oddRound();
   } else {
     odd.left = Math.max(0, odd.left - 3);
+    odd.wrong++;
     const grid = $("#odd-grid");
     grid.classList.remove("shake");
     void grid.offsetWidth;
@@ -1287,6 +1682,7 @@ function oddPick(i) {
 function oddStart() {
   clearInterval(odd.timer);
   odd.running = true;
+  odd.wrong = 0;
   odd.score = 0;
   odd.left = ODD_TIME;
   $("#odd-over").hidden = true;
@@ -1329,6 +1725,7 @@ $("#odd-start").addEventListener("click", oddStart);
 
 // ---------- Match It ----------
 let mTarget = randHex();
+let mChecked = false;
 let mMine = "#808080";
 function drawMatchScore() { $("#g3-score").innerHTML = "<span>Best match <b>" + load("hx-b-matchit") + "%</b></span>"; }
 function showMatchTarget() {
@@ -1343,7 +1740,12 @@ const matchCtl = bindSliders("m", (v) => {
   m.style.color = textOn(mMine);
 });
 $("#m-check").addEventListener("click", () => {
+  if (mChecked) { $("#g3-fb").textContent = "Tap New color for a new target."; return; }
+  mChecked = true;
   const acc = accuracy(mTarget, mMine);
+  const run = acc >= 98 ? load("hx-s-matchrun") + 1 : 0;
+  save("hx-s-matchrun", run);
+  if (run > load("hx-b-matchrun")) save("hx-b-matchrun", run);
   if (acc > load("hx-b-matchit")) save("hx-b-matchit", acc);
   drawMatchScore();
   $("#g3-fb").textContent = acc + "% match. Target " + mTarget + ", yours " + mMine + ".";
@@ -1351,6 +1753,7 @@ $("#m-check").addEventListener("click", () => {
 });
 $("#m-new").addEventListener("click", matchNew);
 function matchNew() {
+  mChecked = false;
   mTarget = randHex();
   showMatchTarget();
   matchCtl.set("#808080");
@@ -1441,6 +1844,7 @@ function memCheck() {
     $("#mem-next").hidden = false;
   } else {
     const avg = Math.round(mem.scores.reduce((a, b) => a + b, 0) / mem.scores.length);
+    if (Math.min(...mem.scores) >= 95) save("hx-b-aces", 1);
     const isBest = avg > load("hx-b-memory");
     if (isBest) save("hx-b-memory", avg);
     finalAvg = avg;
@@ -1696,12 +2100,26 @@ $("#rain").addEventListener("click", popRain);
 $("#reset-colors").addEventListener("click", resetAll);
 $("#party-stage").addEventListener("click", (e) => { popEmoji(e.clientX, e.clientY); chaos(false); });
 
+// Secret: the classic cheat code
+const KONAMI = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+let konamiPos = 0;
+function konamiCheck(key) {
+  const k = key.length === 1 ? key.toLowerCase() : key;
+  if (k === KONAMI[konamiPos]) {
+    konamiPos++;
+    if (konamiPos === KONAMI.length) { konamiPos = 0; bump("konami"); }
+  } else {
+    konamiPos = k === KONAMI[0] ? 1 : 0;
+  }
+}
+
 // ---------- Keyboard ----------
 document.addEventListener("keyup", (e) => {
   if (e.key === " " && (current === "party" || current === "palette")) e.preventDefault();
 });
 document.addEventListener("keydown", (e) => {
-  if (e.ctrlKey || e.metaKey || e.altKey) return;                     // keep shortcuts working
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  konamiCheck(e.key);                     // keep shortcuts working
   const t = e.target;
   if (t && (t.tagName === "TEXTAREA" || t.tagName === "SELECT" || (t.tagName === "INPUT" && t.type === "text"))) return;
   if (current === "party") {
@@ -1715,9 +2133,167 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+// ---------- Playing on days in a row ----------
+function localDayKey(d) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function touchDay() {
+  const now = new Date();
+  const today = localDayKey(now);
+  const last = loadStr("hx-lastday");
+  if (last === today) return;
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const run = last === localDayKey(yesterday) ? load("hx-daystreak") + 1 : 1;
+  save("hx-daystreak", run);
+  if (run > load("hx-b-daystreak")) save("hx-b-daystreak", run);
+  saveStr("hx-lastday", today);
+}
+
+// ---------- Global leaderboard ----------
+// To turn the world board on, paste your Firebase Realtime Database URL between the quotes.
+// It looks like "https://my-project-default-rtdb.firebaseio.com". See the README for the steps.
+const LEADERBOARD_URL = "";
+
+const NAME_A = ["Sneaky", "Speedy", "Sunny", "Cosmic", "Fuzzy", "Brave", "Jolly", "Mighty", "Tiny", "Zesty", "Lucky", "Clever", "Bouncy", "Sparkly", "Dizzy", "Gentle", "Wild", "Quiet", "Turbo", "Mellow"];
+const NAME_B = ["Teal", "Crimson", "Amber", "Violet", "Indigo", "Coral", "Lime", "Magenta", "Cobalt", "Peach", "Mint", "Scarlet", "Gold", "Azure", "Plum", "Ivory"];
+const NAME_C = ["Otter", "Falcon", "Panda", "Gecko", "Narwhal", "Llama", "Koala", "Octopus", "Fox", "Penguin", "Dragon", "Robot", "Walrus", "Hedgehog", "Moth", "Yeti"];
+function makeName() {
+  const pick = (list) => list[Math.floor(Math.random() * list.length)];
+  return pick(NAME_A) + " " + pick(NAME_B) + " " + pick(NAME_C) + " " + (1 + Math.floor(Math.random() * 99));
+}
+function makeId() {
+  let out = "";
+  try {
+    const bytes = new Uint8Array(12);
+    crypto.getRandomValues(bytes);
+    bytes.forEach((b) => { out += (b % 36).toString(36); });
+  } catch (e) {
+    for (let i = 0; i < 12; i++) out += Math.floor(Math.random() * 36).toString(36);
+  }
+  return out;
+}
+
+// Players are a random id plus a made-up name. No real names, no emails, no typing a name.
+const player = { id: loadStr("hx-pid"), name: loadStr("hx-pname") };
+if (!/^[a-z0-9]{8,20}$/.test(player.id)) { player.id = makeId(); saveStr("hx-pid", player.id); }
+if (!/^[A-Za-z]+( [A-Za-z]+){1,2} [0-9]{1,3}$/.test(player.name)) { player.name = makeName(); saveStr("hx-pname", player.name); }
+
+// The badge next to your name is your rarest trophy
+function myBadge() {
+  for (const tier of ["mythic", "legendary", "secret", "rare", "starter"]) {
+    const found = TROPHIES.find((t) => t.tier === tier && unlocked.has(t.id));
+    if (found) return found.id;
+  }
+  return "palette";
+}
+
+const BOARDS = [
+  { id: "xp",       label: "XP",           value: () => xp },
+  { id: "oddone",   label: "Odd One Out",  value: () => load("hx-b-oddone") },
+  { id: "streak",   label: "Best streak",  value: () => maxStreak() },
+  { id: "memory",   label: "Color Memory", value: () => load("hx-b-memory"), suffix: "%" },
+  { id: "trophies", label: "Trophies",     value: () => unlocked.size }
+];
+
+let lbBusy = false;
+let lbLast = 0;
+async function lbSyncAll(force) {
+  if (!LEADERBOARD_URL || lbBusy) return;
+  if (!force && Date.now() - lbLast < 15000) return;
+  lbLast = Date.now();
+  lbBusy = true;
+  try {
+    const badge = myBadge();
+    const who = player.name + "|" + badge;
+    for (const b of BOARDS) {
+      const score = b.value();
+      if (score <= 0) continue;
+      const sentKey = "hx-lb-" + b.id;
+      const whoKey = "hx-lbn-" + b.id;
+      if (score <= load(sentKey) && loadStr(whoKey) === who) continue;      // nothing new to send
+      const res = await fetch(LEADERBOARD_URL + "/scores/" + b.id + "/" + player.id + ".json", {
+        method: "PUT",
+        body: JSON.stringify({ name: player.name, badge: badge, score: score, t: Date.now() })
+      });
+      if (res.ok) { save(sentKey, Math.max(score, load(sentKey))); saveStr(whoKey, who); }
+    }
+  } catch (e) { /* offline or blocked: try again later */ }
+  finally { lbBusy = false; }
+}
+
+async function lbTop(board) {
+  const res = await fetch(LEADERBOARD_URL + "/scores/" + board + ".json?orderBy=%22score%22&limitToLast=20");
+  if (!res.ok) throw new Error("bad response");
+  const data = (await res.json()) || {};
+  return Object.entries(data)
+    .map(([id, v]) => ({ id: id, name: String(v.name || ""), badge: String(v.badge || ""), score: Number(v.score) || 0 }))
+    .sort((a, b) => b.score - a.score);
+}
+
+let lbBoard = "xp";
+function drawLbTabs() {
+  const box = $("#lb-tabs");
+  box.innerHTML = "";
+  BOARDS.forEach((b) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn";
+    btn.textContent = b.label;
+    btn.setAttribute("aria-pressed", String(b.id === lbBoard));
+    btn.addEventListener("click", () => { lbBoard = b.id; drawLbTabs(); drawLbList(); });
+    box.appendChild(btn);
+  });
+}
+
+async function drawLbList() {
+  const list = $("#lb-list");
+  const status = $("#lb-status");
+  list.innerHTML = "";
+  if (!LEADERBOARD_URL) { status.textContent = "The world board isn’t switched on yet. Your own scores are below."; return; }
+  const board = BOARDS.find((b) => b.id === lbBoard);
+  status.textContent = "Loading…";
+  try {
+    const rows = await lbTop(board.id);
+    if (board.id !== lbBoard) return;                  // you switched tabs while it loaded
+    status.textContent = rows.length ? "" : "Nobody is on this board yet. Be the first!";
+    rows.forEach((r, i) => {
+      const li = document.createElement("li");
+      li.className = "lb-row" + (r.id === player.id ? " me" : "");
+      const rank = document.createElement("span");
+      rank.className = "lb-rank";
+      rank.textContent = String(i + 1);
+      const art = document.createElement("span");
+      if (Object.prototype.hasOwnProperty.call(ART, r.badge)) art.innerHTML = artSvg(r.badge, 34);
+      const name = document.createElement("span");
+      name.className = "lb-name";
+      name.textContent = r.name;
+      const score = document.createElement("span");
+      score.className = "lb-score";
+      score.textContent = r.score.toLocaleString() + (board.suffix || "");
+      li.append(rank, art, name, score);
+      list.appendChild(li);
+    });
+  } catch (e) {
+    status.textContent = "Couldn’t load the board. Check your connection and try again.";
+  }
+}
+
+function drawLeaderboard() {
+  $("#lb-name").textContent = player.name;
+  $("#lb-mine").innerHTML = BOARDS.map((b) => "<span>" + b.label + " <b>" + b.value().toLocaleString() + (b.suffix || "") + "</b></span>").join("");
+  drawLbTabs();
+  lbSyncAll(true).then(drawLbList, drawLbList);
+}
+$("#lb-rename").addEventListener("click", () => {
+  player.name = makeName();
+  saveStr("hx-pname", player.name);
+  $("#lb-name").textContent = player.name;
+  lbSyncAll(true).then(drawLbList, drawLbList);
+});
+
 // ---------- Router ----------
-const VIEWS = ["home", "mixer", "palette", "oddone", "namehex", "whichcolor", "matchit", "memory", "hexmath", "gradient", "party", "trophies"];
-let current = "home";
+const VIEWS = ["home", "mixer", "palette", "oddone", "namehex", "whichcolor", "matchit", "memory", "hexmath", "gradient", "party", "trophies", "leaderboard"];
 
 const INIT = {
   home: buildHome,
@@ -1731,7 +2307,8 @@ const INIT = {
   hexmath: () => { score4.reset(); round4(); },
   gradient: drawGradient,
   party: () => { $("#popped").textContent = popped.toLocaleString(); drawPopModes(); },
-  trophies: drawTrophies
+  trophies: drawTrophies,
+  leaderboard: drawLeaderboard
 };
 const LEAVE = { oddone: oddIdle, memory: memClear, party: resetAll };
 
@@ -1752,12 +2329,11 @@ function route() {
 }
 window.addEventListener("hashchange", route);
 
+touchDay();
 drawXP();
 drawTrophyCount();
 route();
+checkTrophies();
 </script>
 </body>
 </html>
-//THIS IS THE END OF THE FILE
-//PLEASE GIVE ME CREDIT WHEN USING THIS CODE. I MADE THIS ENTIRE WEBSITE AND IT TOOK ME A LONG TIME. THANK YOU.
-//BY Noor Zaatari-Wilkinson

@@ -1,0 +1,9 @@
+Dev Log: Hex Colors
+
+What I built: A hex color website that started as a tiny City Life page and grew into a hub of ten color games. You can mix colors, guess hex codes, memorize colors, and race to spot the odd tile. There’s a color of the day, XP and levels, and a Trophy Room with 20 trophies. I drew all the art myself as SVG code. In Keyboard Party, every letter you type changes the page colors and pops an emoji from the full list.
+
+What I learned: A hex code is three pairs of digits for red, green and blue, and each pair is a number from 0 to 255 written in base 16. Fast color flashing can bother some people’s eyes, so the strobe is opt-in, flashes at most 3 times a second, and stops by itself after 6 seconds. I also learned that a GitHub Pages site needs a public repo and a main file named exactly index.html.
+
+What went wrong, and how I fixed it: My first try at publishing with GitHub Pages didn’t work, so I went through the checklist one step at a time until I found the problem and fixed it. The site is now live and people can try it. I also couldn’t preview the drawings while I made them, so I still need to look at each one and fix any that look off.
+
+Next: Look at every trophy drawing, then add more trophies and a two-player color duel.

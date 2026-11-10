@@ -1,0 +1,1760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hex Colors</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #e8ecfb;
+    --panel: #ffffff;
+    --ink: #14171c;
+    --muted: #5a6272;
+    --edge: #14171c;
+    --accent: #6c4cff;
+    --accent-ink: #ffffff;
+    --good: #12a35e;
+    --bad: #e03a3a;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1118; --panel: #1a1d27; --ink: #f1f2f6; --muted: #a2a8b8;
+      --edge: #c9cdda; --accent: #8f7cff; --accent-ink: #0f1118;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1118; --panel: #1a1d27; --ink: #f1f2f6; --muted: #a2a8b8;
+    --edge: #c9cdda; --accent: #8f7cff; --accent-ink: #0f1118;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { color-scheme: light dark; scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--bg-ink, var(--ink));
+    font-family: "Fredoka", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+    font-weight: 500;
+    line-height: 1.5;
+    transition: background-color 0.5s, color 0.5s;
+  }
+  .mono { font-family: "SF Mono", Menlo, Consolas, "Courier New", monospace; font-weight: 700; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  a { color: inherit; }
+  h2 { display: flex; align-items: center; gap: 10px; margin: 6px 0 4px; font-size: clamp(1.7rem, 6vw, 2.3rem); line-height: 1.1; color: var(--title, var(--bg-ink, var(--ink))); }
+  h3 { margin: 16px 0 8px; font-size: 1.05rem; }
+  p { margin: 0 0 12px; }
+  svg.art, svg.icon { display: block; flex: 0 0 auto; }
+  [data-art], [data-icon] { display: inline-flex; vertical-align: middle; }
+
+  /* Top bar */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 960px; margin: 0 auto; padding: 16px 16px 0; }
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.3rem; text-decoration: none; }
+  .hdr-right { display: flex; align-items: center; gap: 14px; }
+  .trophy-link { display: flex; align-items: center; gap: 4px; text-decoration: none; font-weight: 700; font-size: 0.9rem; }
+  .xp { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; }
+  .xp-track { width: 80px; height: 14px; border: 3px solid var(--edge); border-radius: 99px; overflow: hidden; background: var(--panel); }
+  #xp-bar { height: 100%; width: 0; background: var(--accent); }
+  @media (max-width: 520px) { #lvl-title { display: none; } }
+
+  main { max-width: 960px; margin: 0 auto; padding: 14px 16px 64px; }
+  .view:not(#v-home) { max-width: 680px; margin-left: auto; margin-right: auto; }
+  .back { display: inline-block; font-weight: 600; text-decoration: none; margin-bottom: 4px; }
+  .back:hover { text-decoration: underline; }
+  .sub { color: var(--bg-ink, var(--ink)); opacity: 0.8; margin-bottom: 8px; }
+
+  /* Home */
+  .intro h1 { font-size: clamp(2.6rem, 10vw, 4.4rem); line-height: 1; margin: 10px 0 10px; color: var(--title, var(--bg-ink, var(--ink))); }
+  .intro p { max-width: 560px; font-size: 1.1rem; opacity: 0.85; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 20px; margin-top: 20px; }
+  .card {
+    display: flex; flex-direction: column; text-decoration: none;
+    background: var(--panel); color: var(--ink);
+    border: 3px solid var(--edge); border-radius: 20px; overflow: hidden;
+    box-shadow: 5px 5px 0 var(--edge);
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .card:hover { transform: translate(-3px, -3px); box-shadow: 8px 8px 0 var(--edge); }
+  .card:active { transform: translate(3px, 3px); box-shadow: 2px 2px 0 var(--edge); }
+  .card-top { display: flex; align-items: center; justify-content: center; height: 118px; background: var(--tile); border-bottom: 3px solid var(--edge); }
+  .card-body { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px 14px; flex: 1; }
+  .card-body b { font-size: 1.2rem; }
+  .card-body span { font-size: 0.92rem; color: var(--muted); }
+  .card-body em { font-style: normal; font-weight: 700; font-size: 0.85rem; margin-top: auto; padding-top: 6px; }
+
+  .daily { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; font: inherit; cursor: pointer; margin-top: 8px; }
+  .daily-swatch { width: 64px; height: 64px; border-radius: 16px; border: 3px solid var(--edge); flex: 0 0 auto; }
+  .daily-text { flex: 1; display: flex; flex-direction: column; }
+  .daily-go { font-weight: 700; color: var(--accent); }
+
+  /* Shared pieces */
+  .panel {
+    background: var(--panel); color: var(--ink);
+    border: 3px solid var(--edge); border-radius: 20px;
+    padding: 18px; margin-top: 16px;
+    box-shadow: 5px 5px 0 var(--edge), 0 0 30px var(--glow, transparent);
+    transition: background-color 0.5s, color 0.5s, border-color 0.5s, box-shadow 0.5s;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font: inherit; font-weight: 700; cursor: pointer;
+    border: 3px solid var(--edge); border-radius: 14px;
+    background: var(--panel); color: var(--ink);
+    padding: 8px 16px; box-shadow: 3px 3px 0 var(--edge);
+    transition: background-color 0.5s, color 0.5s, border-color 0.5s;
+  }
+  .btn:active { transform: translate(3px, 3px); box-shadow: none; }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); }
+  .btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .btn:disabled { cursor: default; opacity: 0.6; }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+
+  .hero {
+    border: 3px solid var(--edge); border-radius: 22px; min-height: 210px; padding: 20px;
+    display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start;
+    background: #6c4cff; color: #fff;
+    box-shadow: 5px 5px 0 var(--edge), 0 0 40px var(--glow, transparent);
+    transition: background 0.08s linear;
+  }
+  .hero .code { font-size: clamp(2.6rem, 13vw, 4.2rem); letter-spacing: 0.02em; }
+  .hero-label { opacity: 0.85; }
+  .hero .row { margin-top: 0; }
+  .hero .btn { color: inherit; background: transparent; border-color: currentColor; box-shadow: none; }
+
+  .slider-row { display: grid; grid-template-columns: 56px 1fr 96px; align-items: center; gap: 10px; margin: 6px 0; }
+  .slider-row output { text-align: right; font-size: 0.9rem; color: var(--muted); }
+  input[type="range"] { width: 100%; }
+  .sr { accent-color: #e5484d; } .sg { accent-color: #12a35e; } .sb { accent-color: #3b6df5; }
+  .field { display: block; margin-top: 12px; font-weight: 600; }
+  .field input[type="text"] {
+    display: block; width: 100%; margin-top: 6px; font-size: 1.1rem; padding: 10px 12px;
+    border: 3px solid var(--edge); border-radius: 12px; background: var(--bg); color: var(--ink);
+  }
+
+  .swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .swatch { flex: 1 1 74px; min-height: 64px; border: 3px solid var(--edge); border-radius: 14px; cursor: pointer; font-size: 0.78rem; padding: 4px; }
+
+  .score { display: flex; gap: 18px; flex-wrap: wrap; color: var(--muted); font-size: 0.95rem; margin: 0 0 12px; }
+  .score b { color: var(--ink); }
+  .fb { min-height: 1.6em; margin: 12px 0 0; font-weight: 700; }
+
+  .stage { height: 140px; border: 3px solid var(--edge); border-radius: 16px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; }
+  .stage.text { font-size: clamp(2rem, 11vw, 3rem); }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .opt { font: inherit; font-weight: 700; cursor: pointer; padding: 16px 8px; font-size: 1.1rem; color: var(--ink); background: var(--panel); border: 3px solid var(--edge); border-radius: 14px; box-shadow: 3px 3px 0 var(--edge); }
+  .opt:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: none; }
+  .opt.swatchopt { height: 88px; padding: 0; }
+  .opt.right { outline: 5px solid var(--good); outline-offset: 2px; }
+  .opt.wrong { outline: 5px solid var(--bad); outline-offset: 2px; }
+
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .compare div { height: 120px; border: 3px solid var(--edge); border-radius: 16px; display: flex; align-items: flex-end; padding: 8px 12px; font-weight: 700; }
+
+  .timebar { height: 14px; border: 3px solid var(--edge); border-radius: 99px; overflow: hidden; margin-bottom: 12px; }
+  .timebar div { height: 100%; width: 100%; background: var(--accent); }
+
+  .odd-grid { display: grid; gap: 6px; }
+  .tile { width: 100%; aspect-ratio: 1; border: none; border-radius: 10px; padding: 0; cursor: pointer; }
+  .over { text-align: center; padding: 24px 8px; }
+  .over p { font-size: 1.2rem; font-weight: 700; }
+  .shake { animation: shake 0.25s; }
+  @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  .palette { display: grid; grid-template-columns: repeat(5, 1fr); border: 3px solid var(--edge); border-radius: 20px; overflow: hidden; box-shadow: 5px 5px 0 var(--edge); margin: 16px 0 6px; }
+  .pcol { display: flex; flex-direction: column; min-height: 280px; }
+  .pcol .sw { flex: 1; border: none; display: flex; align-items: flex-end; justify-content: center; padding: 12px 4px; cursor: pointer; font-size: 0.95rem; }
+  .pcol .lock { display: flex; justify-content: center; border: none; border-top: 3px solid var(--edge); background: var(--panel); color: var(--ink); padding: 10px; cursor: pointer; }
+  @media (max-width: 560px) {
+    .palette { grid-template-columns: 1fr; }
+    .pcol { flex-direction: row; min-height: 64px; }
+    .pcol .sw { align-items: center; justify-content: flex-start; padding: 0 14px; }
+    .pcol .lock { border-top: none; border-left: 3px solid var(--edge); }
+  }
+
+  #gr-preview { height: 220px; border: 3px solid var(--edge); border-radius: 18px; margin-bottom: 12px; }
+  .gr-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  input[type="color"] { width: 64px; height: 44px; border: 3px solid var(--edge); border-radius: 12px; background: var(--panel); padding: 2px; cursor: pointer; }
+  code { display: block; padding: 10px 12px; border: 3px solid var(--edge); border-radius: 12px; background: var(--bg); color: var(--ink); overflow-x: auto; white-space: nowrap; margin-top: 12px; }
+
+  .stage-party { min-height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; user-select: none; }
+  .stage-party .big { font-size: clamp(1.8rem, 8vw, 3rem); font-weight: 700; line-height: 1.1; margin-bottom: 8px; }
+
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 12px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 2px solid var(--edge); }
+  th { color: var(--muted); font-weight: 600; font-size: 0.9rem; }
+  .chip { padding: 1px 6px; border-radius: 6px; font-weight: 700; color: #fff; }
+
+  /* Trophy Room */
+  .trophy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; margin-top: 16px; }
+  .trophy {
+    display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px;
+    padding: 14px 10px 12px; background: var(--panel); color: var(--ink);
+    border: 3px solid var(--edge); border-radius: 18px; box-shadow: 4px 4px 0 var(--edge);
+  }
+  .trophy b { font-size: 1rem; line-height: 1.2; }
+  .trophy .how { font-size: 0.82rem; color: var(--muted); }
+  .trophy .status { font-size: 0.8rem; font-weight: 700; margin-top: 4px; }
+  .trophy.unlocked .status { color: var(--good); }
+  .trophy.locked .trophy-art { filter: grayscale(1) brightness(0.75); opacity: 0.5; }
+  .trophy.locked { border-style: dashed; }
+
+  /* Party effects */
+  #backdrop { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+  #strobe { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0; }
+  .pop, .dot { position: fixed; z-index: 50; pointer-events: none; line-height: 1; font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif; }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%); display: flex; align-items: center; gap: 10px;
+    background: #14171c; color: #ffffff; padding: 8px 18px; border-radius: 99px;
+    z-index: 60; opacity: 0; transition: opacity 0.2s; pointer-events: none; max-width: 92vw;
+  }
+  .toast.show { opacity: 1; }
+  .toast i { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ffffff; display: inline-block; flex: 0 0 auto; }
+
+  @media (prefers-reduced-motion: reduce) {
+    body, .panel, .btn, .card, .hero { transition: none; }
+    .card:hover { transform: none; }
+    .shake { animation: none; }
+  }
+</style>
+</head>
+<body>
+<div id="backdrop" aria-hidden="true"></div>
+<div id="strobe" aria-hidden="true"></div>
+<div class="toast" id="toast" aria-hidden="true"><span id="toast-art"></span><i id="toast-chip"></i><span id="toast-text"></span></div>
+
+<header class="top">
+  <a class="logo" href="#home"><span data-art="palette" data-size="34"></span> Hex Colors</a>
+  <div class="hdr-right">
+    <a class="trophy-link" href="#trophies" aria-label="Trophy Room"><span data-art="trophies" data-size="32"></span><span id="trophy-count">0/20</span></a>
+    <div class="xp" aria-label="Your level">
+      <span id="lvl-title">Level 1</span>
+      <div class="xp-track"><div id="xp-bar"></div></div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- HOME -->
+  <section class="view" id="v-home">
+    <div class="intro">
+      <h1>Hex Colors</h1>
+      <p>Mix them, guess them, memorize them, and break your keyboard on them. Every right answer gives you XP, and there are trophies to win.</p>
+    </div>
+    <button class="panel daily" id="daily-btn" type="button">
+      <span class="daily-swatch" id="daily-swatch"></span>
+      <span class="daily-text"><b>Color of the day</b><span class="mono" id="daily-hex"></span></span>
+      <span class="daily-go">Open in Hex Lab</span>
+    </button>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- HEX LAB -->
+  <section class="view" id="v-mixer" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="mixer" data-size="46"></span> Hex Lab</h2>
+    <p class="sub">Slide the sliders or type a code. Watch the hex change.</p>
+    <div class="hero" id="lab-hero">
+      <span class="hero-label">Your color</span>
+      <span class="code mono" id="lab-hex">#5B3DF5</span>
+      <div class="row">
+        <button class="btn" id="lab-rand" type="button"><span data-icon="dice"></span> Random</button>
+        <button class="btn" id="lab-copy" type="button"><span data-icon="copy"></span> Copy</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="slider-row"><label for="lab-r">Red</label><input class="sr" id="lab-r" type="range" min="0" max="255" value="91"><output class="mono" id="lab-r-out"></output></div>
+      <div class="slider-row"><label for="lab-g">Green</label><input class="sg" id="lab-g" type="range" min="0" max="255" value="61"><output class="mono" id="lab-g-out"></output></div>
+      <div class="slider-row"><label for="lab-b">Blue</label><input class="sb" id="lab-b" type="range" min="0" max="255" value="245"><output class="mono" id="lab-b-out"></output></div>
+      <label class="field">Or type a hex code
+        <input id="lab-input" class="mono" type="text" maxlength="7" spellcheck="false" autocomplete="off" value="#5B3DF5">
+      </label>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">Shades (tap one to use it)</h3>
+      <div class="swatch-row" id="lab-shades"></div>
+      <h3>Opposite and gray</h3>
+      <div class="swatch-row" id="lab-extra"></div>
+    </div>
+    <div class="panel">
+      <h3 style="margin-top:0">How a hex code works</h3>
+      <p>A hex code is a color written as <b class="mono">#RRGGBB</b>. The first pair is red, the second is green, and the third is blue.</p>
+      <p>Each pair is a number from <b class="mono">00</b> (none) to <b class="mono">FF</b> (all of it). Hex counts with 16 symbols: 0 to 9, then A to F.</p>
+      <p>Example: <b class="mono">#FF8800</b> is <span class="chip" style="background:#e5484d">FF</span> red, <span class="chip" style="background:#12a35e">88</span> green and <span class="chip" style="background:#3b6df5">00</span> blue. That makes orange.</p>
+      <table>
+        <tr><th>Hex</th><th>Number</th><th>Meaning</th></tr>
+        <tr><td class="mono">00</td><td>0</td><td>None</td></tr>
+        <tr><td class="mono">0A</td><td>10</td><td>A little</td></tr>
+        <tr><td class="mono">10</td><td>16</td><td>One step up the left digit</td></tr>
+        <tr><td class="mono">80</td><td>128</td><td>About half</td></tr>
+        <tr><td class="mono">FF</td><td>255</td><td>All of it</td></tr>
+      </table>
+      <p>When all three pairs match, you get gray.</p>
+    </div>
+  </section>
+
+  <!-- PALETTE PARTY -->
+  <section class="view" id="v-palette" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="palette" data-size="46"></span> Palette Party</h2>
+    <p class="sub">Press Space for a new palette. Tap a color to copy it. Tap the lock to keep it.</p>
+    <div class="row" id="pal-modes">
+      <button class="btn" type="button" data-mode="any" aria-pressed="true">Anything</button>
+      <button class="btn" type="button" data-mode="pastel" aria-pressed="false">Pastel</button>
+      <button class="btn" type="button" data-mode="neon" aria-pressed="false">Neon</button>
+      <button class="btn" type="button" data-mode="dark" aria-pressed="false">Dark</button>
+    </div>
+    <div class="palette" id="palette"></div>
+    <div class="row">
+      <button class="btn primary" id="pal-gen" type="button"><span data-icon="sparkle"></span> New palette</button>
+      <button class="btn" id="pal-copy" type="button"><span data-icon="copy"></span> Copy all</button>
+    </div>
+  </section>
+
+  <!-- ODD ONE OUT -->
+  <section class="view" id="v-oddone" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="oddone" data-size="46"></span> Odd One Out</h2>
+    <p class="sub">One tile is a slightly different shade. Find it before time runs out. A wrong tap costs 3 seconds.</p>
+    <div class="panel">
+      <div class="score" id="odd-score"></div>
+      <div class="timebar"><div id="odd-bar"></div></div>
+      <div class="odd-grid" id="odd-grid" hidden></div>
+      <div class="over" id="odd-over">
+        <p id="odd-msg"></p>
+        <button class="btn primary" id="odd-start" type="button">Start</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- NAME THAT HEX -->
+  <section class="view" id="v-namehex" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="namehex" data-size="46"></span> Name That Hex</h2>
+    <p class="sub">Which hex code matches this color?</p>
+    <div class="panel">
+      <div class="score" id="g1-score"></div>
+      <div class="stage" id="g1-stage"></div>
+      <div class="options" id="g1-options"></div>
+      <p class="fb" id="g1-fb" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- WHICH COLOR -->
+  <section class="view" id="v-whichcolor" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="whichcolor" data-size="46"></span> Which Color?</h2>
+    <p class="sub">Which color matches this hex code?</p>
+    <div class="panel">
+      <div class="score" id="g2-score"></div>
+      <div class="stage text mono" id="g2-stage"></div>
+      <div class="options" id="g2-options"></div>
+      <p class="fb" id="g2-fb" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- MATCH IT -->
+  <section class="view" id="v-matchit" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="matchit" data-size="46"></span> Match It</h2>
+    <p class="sub">Move the sliders until your color matches the target, then check your score.</p>
+    <div class="panel">
+      <div class="score" id="g3-score"></div>
+      <div class="compare">
+        <div id="m-target">Target</div>
+        <div id="m-mine">Yours</div>
+      </div>
+      <div class="slider-row"><label for="m-r">Red</label><input class="sr" id="m-r" type="range" min="0" max="255" value="128"><output class="mono" id="m-r-out"></output></div>
+      <div class="slider-row"><label for="m-g">Green</label><input class="sg" id="m-g" type="range" min="0" max="255" value="128"><output class="mono" id="m-g-out"></output></div>
+      <div class="slider-row"><label for="m-b">Blue</label><input class="sb" id="m-b" type="range" min="0" max="255" value="128"><output class="mono" id="m-b-out"></output></div>
+      <div class="row">
+        <button class="btn primary" id="m-check" type="button">Check</button>
+        <button class="btn" id="m-new" type="button">New color</button>
+      </div>
+      <p class="fb" id="g3-fb" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- COLOR MEMORY -->
+  <section class="view" id="v-memory" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="memory" data-size="46"></span> Color Memory</h2>
+    <p class="sub">Memorize the color before it disappears, then mix it from memory. Five rounds, and each one is faster.</p>
+    <div class="panel">
+      <div class="score" id="mem-score"></div>
+      <div class="timebar"><div id="mem-bar" style="width:0"></div></div>
+      <div class="compare">
+        <div id="mem-target">Target</div>
+        <div id="mem-mine">Yours</div>
+      </div>
+      <div id="mem-controls" hidden>
+        <div class="slider-row"><label for="mm-r">Red</label><input class="sr" id="mm-r" type="range" min="0" max="255" value="128"><output class="mono" id="mm-r-out"></output></div>
+        <div class="slider-row"><label for="mm-g">Green</label><input class="sg" id="mm-g" type="range" min="0" max="255" value="128"><output class="mono" id="mm-g-out"></output></div>
+        <div class="slider-row"><label for="mm-b">Blue</label><input class="sb" id="mm-b" type="range" min="0" max="255" value="128"><output class="mono" id="mm-b-out"></output></div>
+        <div class="row"><button class="btn primary" id="mem-check" type="button">Check</button></div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="mem-start" type="button">Start</button>
+        <button class="btn primary" id="mem-next" type="button" hidden>Next round</button>
+      </div>
+      <p class="fb" id="mem-fb" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- HEX MATH -->
+  <section class="view" id="v-hexmath" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="hexmath" data-size="46"></span> Hex Math</h2>
+    <p class="sub">Each hex pair is a number from 0 to 255. What number is this one?</p>
+    <div class="panel">
+      <div class="score" id="g4-score"></div>
+      <div class="stage text mono" id="g4-stage"></div>
+      <div class="options" id="g4-options"></div>
+      <p class="fb" id="g4-fb" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- GRADIENT MAKER -->
+  <section class="view" id="v-gradient" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="gradient" data-size="46"></span> Gradient Maker</h2>
+    <p class="sub">Pick two colors, turn the angle, and copy the CSS.</p>
+    <div class="panel">
+      <div id="gr-preview"></div>
+      <div class="gr-controls">
+        <label>Color 1 <input type="color" id="gr-a" value="#ff6b6b"></label>
+        <label>Color 2 <input type="color" id="gr-b" value="#6c4cff"></label>
+        <button class="btn" id="gr-swap" type="button"><span data-icon="swap"></span> Swap</button>
+        <button class="btn" id="gr-rand" type="button"><span data-icon="dice"></span> Random</button>
+      </div>
+      <div class="row" id="gr-types">
+        <button class="btn" type="button" data-gtype="linear" aria-pressed="true">Linear</button>
+        <button class="btn" type="button" data-gtype="radial" aria-pressed="false">Radial</button>
+      </div>
+      <div class="slider-row" style="margin-top:12px"><label for="gr-angle">Angle</label><input id="gr-angle" type="range" min="0" max="360" value="135"><output class="mono" id="gr-angle-out"></output></div>
+      <code class="mono" id="gr-css"></code>
+      <div class="row"><button class="btn primary" id="gr-copy" type="button"><span data-icon="copy"></span> Copy CSS</button></div>
+    </div>
+  </section>
+
+  <!-- KEYBOARD PARTY -->
+  <section class="view" id="v-party" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="party" data-size="46"></span> Keyboard Party</h2>
+    <p class="sub">Mash any letter key or tap the stage. Space puts everything back to normal. <span id="emoji-count"></span></p>
+    <div class="panel stage-party" id="party-stage">
+      <p class="big">Mash your keyboard!</p>
+      <p>Popped so far: <b id="popped">0</b></p>
+    </div>
+    <div class="row" id="pop-modes">
+      <button class="btn" type="button" data-pop="0" aria-pressed="true">Pop emoji</button>
+      <button class="btn" type="button" data-pop="1" aria-pressed="false">Pop my art</button>
+    </div>
+    <div class="row">
+      <button class="btn primary" id="surprise" type="button"><span data-icon="sparkle"></span> Surprise me</button>
+      <button class="btn" id="rain" type="button"><span data-icon="rain"></span> Rain</button>
+      <button class="btn" id="strobe-btn" type="button"></button>
+      <button class="btn" id="reset-colors" type="button"><span data-icon="reset"></span> Reset</button>
+    </div>
+  </section>
+
+  <!-- TROPHY ROOM -->
+  <section class="view" id="v-trophies" hidden>
+    <a class="back" href="#home">← All games</a>
+    <h2><span data-art="trophies" data-size="46"></span> Trophy Room</h2>
+    <p class="sub">Every trophy has its own art. Locked ones show how to win them.</p>
+    <div class="panel">
+      <div class="score"><span id="trophy-summary"></span></div>
+      <div class="timebar" style="margin-bottom:0"><div id="trophy-bar" style="width:0"></div></div>
+    </div>
+    <div class="trophy-grid" id="trophy-grid"></div>
+  </section>
+
+</main>
+
+<script>
+"use strict";
+
+// ART-START
+// ---------- Custom art: every game and trophy is drawn right here as SVG ----------
+const INK = "#14171c";
+let artCounter = 0;
+
+// A medal for trophies: colored disc, dotted ring, then the picture
+const medal = (bg, inner) =>
+  '<circle cx="32" cy="32" r="29" fill="' + bg + '"/>' +
+  '<circle cx="32" cy="32" r="24" fill="none" stroke="#ffffff" stroke-opacity="0.75" stroke-width="2" stroke-dasharray="2 5"/>' + inner;
+
+const ART = {
+  // ----- Games -----
+  mixer: [
+    '<rect x="9" y="8" width="12" height="48" rx="6" fill="#fff"/>',
+    '<rect x="26" y="8" width="12" height="48" rx="6" fill="#fff"/>',
+    '<rect x="43" y="8" width="12" height="48" rx="6" fill="#fff"/>',
+    '<circle cx="15" cy="40" r="8" fill="#ff5c5c"/>',
+    '<circle cx="32" cy="22" r="8" fill="#3ddc84"/>',
+    '<circle cx="49" cy="32" r="8" fill="#4d8dff"/>'
+  ].join(""),
+  palette: [
+    '<path d="M32 7 C14 7 5 21 7 34 C9 49 21 57 34 56 C43 55 40 47 47 46 C55 45 59 38 57 29 C54 15 45 7 32 7 Z" fill="#ffe3b3"/>',
+    '<circle cx="22" cy="45" r="4.5" fill="#fff"/>',
+    '<circle cx="21" cy="25" r="5" fill="#ff5c5c"/>',
+    '<circle cx="33" cy="18" r="5" fill="#ffd43b"/>',
+    '<circle cx="46" cy="24" r="5" fill="#3ddc84"/>',
+    '<circle cx="47" cy="36" r="5" fill="#4d8dff"/>'
+  ].join(""),
+  oddone: [
+    '<rect x="7" y="7" width="14" height="14" rx="3" fill="#ffe066"/>',
+    '<rect x="23" y="7" width="14" height="14" rx="3" fill="#ffe066"/>',
+    '<rect x="39" y="7" width="14" height="14" rx="3" fill="#ffe066"/>',
+    '<rect x="7" y="23" width="14" height="14" rx="3" fill="#ffe066"/>',
+    '<rect x="23" y="23" width="14" height="14" rx="3" fill="#ff9f1a"/>',
+    '<rect x="39" y="23" width="14" height="14" rx="3" fill="#ffe066"/>',
+    '<rect x="7" y="39" width="14" height="14" rx="3" fill="#ffe066"/>',
+    '<rect x="23" y="39" width="14" height="14" rx="3" fill="#ffe066"/>',
+    '<circle cx="42" cy="42" r="11" fill="#ffffff" fill-opacity="0.6"/>',
+    '<path d="M50 50 L59 59" fill="none" stroke-width="6"/>'
+  ].join(""),
+  namehex: [
+    '<circle cx="30" cy="34" r="23" fill="#fff"/>',
+    '<circle cx="30" cy="34" r="15" fill="#ff6b6b"/>',
+    '<circle cx="30" cy="34" r="8" fill="#fff"/>',
+    '<circle cx="30" cy="34" r="3" fill="#ff6b6b"/>',
+    '<path d="M30 34 L54 10" fill="none"/>',
+    '<path d="M54 10 L59 10 M54 10 L54 5" fill="none"/>'
+  ].join(""),
+  whichcolor: [
+    '<circle cx="27" cy="27" r="19" fill="#38d9a9"/>',
+    '<path d="M16 27 A11 11 0 0 1 27 16" fill="none" stroke="#ffffff" stroke-width="3"/>',
+    '<path d="M41 41 L57 57" fill="none" stroke-width="11"/>',
+    '<path d="M41 41 L57 57" fill="none" stroke="#ff8f2e" stroke-width="5"/>'
+  ].join(""),
+  matchit: [
+    '<path d="M26 10 H38 V24 L53 50 C55 55 52 58 47 58 H17 C12 58 9 55 11 50 L26 24 Z" fill="#fff"/>',
+    '<path d="M15.6 42 H48.4 L53 50 C55 55 52 58 47 58 H17 C12 58 9 55 11 50 Z" fill="#4dabf7"/>',
+    '<rect x="23" y="5" width="18" height="7" rx="2" fill="#c68c53"/>',
+    '<circle cx="26" cy="50" r="2.5" fill="#fff" stroke="none"/>',
+    '<circle cx="37" cy="52" r="1.8" fill="#fff" stroke="none"/>'
+  ].join(""),
+  memory: [
+    '<path d="M32 12 C26 5 13 8 14 20 C7 22 7 35 14 37 C13 48 24 54 32 47 C40 54 51 48 50 37 C57 35 57 22 50 20 C51 8 38 5 32 12 Z" fill="#ffc2d9"/>',
+    '<path d="M32 12 V47" fill="none"/>',
+    '<path d="M21 26 C26 24 27 31 23 33" fill="none"/>',
+    '<path d="M43 26 C38 24 37 31 41 33" fill="none"/>',
+    '<path d="M22 41 C27 39 28 44 24 46" fill="none"/>',
+    '<path d="M42 41 C37 39 36 44 40 46" fill="none"/>'
+  ].join(""),
+  hexmath: [
+    '<rect x="13" y="5" width="38" height="54" rx="7" fill="#fff"/>',
+    '<rect x="18" y="11" width="28" height="13" rx="3" fill="#c7f5d9"/>',
+    '<rect x="19" y="30" width="7" height="5" rx="2" fill="#da77f2"/>',
+    '<rect x="29" y="30" width="7" height="5" rx="2" fill="#da77f2"/>',
+    '<rect x="39" y="30" width="7" height="5" rx="2" fill="#da77f2"/>',
+    '<rect x="19" y="38" width="7" height="5" rx="2" fill="#da77f2"/>',
+    '<rect x="29" y="38" width="7" height="5" rx="2" fill="#da77f2"/>',
+    '<rect x="39" y="38" width="7" height="5" rx="2" fill="#da77f2"/>',
+    '<rect x="19" y="46" width="7" height="5" rx="2" fill="#da77f2"/>',
+    '<rect x="29" y="46" width="7" height="5" rx="2" fill="#da77f2"/>',
+    '<rect x="39" y="46" width="7" height="5" rx="2" fill="#ff9f1a"/>'
+  ].join(""),
+  gradient: [
+    '<defs><linearGradient id="GID" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb347"/><stop offset="0.55" stop-color="#ff5c8a"/><stop offset="1" stop-color="#6c4cff"/></linearGradient></defs>',
+    '<rect x="6" y="10" width="52" height="44" rx="8" fill="url(#GID)"/>',
+    '<circle cx="44" cy="24" r="6" fill="#ffd43b"/>',
+    '<path d="M6 44 C18 36 28 50 40 42 C48 37 54 40 58 42" fill="none" stroke="#ffffff" stroke-opacity="0.85" stroke-width="3"/>'
+  ].join(""),
+  party: [
+    '<path d="M8 56 L22 20 L44 42 Z" fill="#ffd43b"/>',
+    '<path d="M14 42 L27 47 M18 31 L33 37" fill="none" stroke-width="2.5"/>',
+    '<path d="M30 20 C34 6 46 12 42 22" fill="none" stroke="#ff5c8a"/>',
+    '<circle cx="50" cy="14" r="3.5" fill="#4d8dff"/>',
+    '<circle cx="30" cy="9" r="3" fill="#ff5c5c"/>',
+    '<rect x="49" y="28" width="7" height="7" rx="1.5" fill="#3ddc84" transform="rotate(20 52 31)"/>',
+    '<polygon points="54,42 56,46 60,46 57,49 58,53 54,51 50,53 51,49 48,46 52,46" fill="#ff9f1a" stroke-width="2"/>'
+  ].join(""),
+  trophies: [
+    '<path d="M20 8 H44 V26 C44 36 38 42 32 42 C26 42 20 36 20 26 Z" fill="#ffd43b"/>',
+    '<path d="M20 13 H11 C11 25 15 31 22 31" fill="none"/>',
+    '<path d="M44 13 H53 C53 25 49 31 42 31" fill="none"/>',
+    '<rect x="28" y="42" width="8" height="9" fill="#ff9f1a"/>',
+    '<rect x="18" y="51" width="28" height="8" rx="2" fill="#ff8f2e"/>',
+    '<polygon points="32,14 34.5,20.5 41,21 36,25.5 37.5,32 32,28.5 26.5,32 28,25.5 23,21 29.5,20.5" fill="#fff" stroke-width="2"/>'
+  ].join(""),
+
+  // ----- Trophies -----
+  "first-steps": medal("#c9f5d3", [
+    '<path d="M32 48 V32" fill="none" stroke-width="3.5"/>',
+    '<path d="M32 36 C21 37 16 30 17 22 C26 21 32 27 32 36 Z" fill="#3ddc84"/>',
+    '<path d="M32 32 C32 23 38 17 47 17 C47 26 41 32 32 32 Z" fill="#2fbf5a"/>',
+    '<path d="M22 49 H42" fill="none"/>'
+  ].join("")),
+  "hot-streak": medal("#ffe0b8", [
+    '<path d="M32 10 C34 21 45 25 43 38 C42 47 37 52 32 52 C26 52 21 47 22 39 C22 33 26 31 27 25 C30 28 30 19 32 10 Z" fill="#ff7a2f"/>',
+    '<path d="M32 31 C34 36 39 37 37 43 C36 47 34 48 32 48 C29 48 27 45 28 41 C29 38 31 37 32 31 Z" fill="#ffd43b" stroke-width="2.5"/>'
+  ].join("")),
+  unstoppable: medal("#cfd8ff", [
+    '<path d="M24 36 L15 46 L25 44 Z" fill="#ff5c5c"/>',
+    '<path d="M40 36 L49 46 L39 44 Z" fill="#ff5c5c"/>',
+    '<path d="M32 9 C41 15 43 28 41 41 H23 C21 28 23 15 32 9 Z" fill="#fff"/>',
+    '<circle cx="32" cy="25" r="4.5" fill="#4dabf7"/>',
+    '<path d="M27 41 L32 54 L37 41 Z" fill="#ffd43b"/>'
+  ].join("")),
+  century: medal("#ffe58a", [
+    '<path d="M17 27 L22 22 V42" fill="none" stroke-width="4.5"/>',
+    '<ellipse cx="33" cy="32" rx="5" ry="10" fill="none" stroke-width="4.5"/>',
+    '<ellipse cx="46" cy="32" rx="5" ry="10" fill="none" stroke-width="4.5"/>',
+    '<path d="M14 50 H50" fill="none"/>'
+  ].join("")),
+  bullseye: medal("#ffd0d0", [
+    '<circle cx="30" cy="34" r="19" fill="#fff"/>',
+    '<circle cx="30" cy="34" r="12" fill="#ff5c5c"/>',
+    '<circle cx="30" cy="34" r="5.5" fill="#fff"/>',
+    '<path d="M30 34 L51 13" fill="none"/>',
+    '<path d="M51 13 L56 13 M51 13 L51 8" fill="none"/>'
+  ].join("")),
+  "sharp-eye": medal("#c5f2e3", [
+    '<path d="M8 32 C18 16 46 16 56 32 C46 48 18 48 8 32 Z" fill="#fff"/>',
+    '<circle cx="32" cy="32" r="10" fill="#38d9a9"/>',
+    '<circle cx="32" cy="32" r="4.5" fill="#14171c" stroke="none"/>',
+    '<circle cx="35" cy="29" r="2" fill="#fff" stroke="none"/>'
+  ].join("")),
+  "eagle-eye": medal("#ffe9c2", [
+    '<path d="M6 34 C14 20 25 18 32 29 C39 18 50 20 58 34 C49 31 42 34 32 46 C22 34 15 31 6 34 Z" fill="#9a6a3a"/>',
+    '<circle cx="32" cy="28" r="7" fill="#fff"/>',
+    '<path d="M29.5 30 L34.5 30 L32 36 Z" fill="#ffd43b" stroke-width="2"/>',
+    '<circle cx="29.3" cy="26.5" r="1.4" fill="#14171c" stroke="none"/>',
+    '<circle cx="34.7" cy="26.5" r="1.4" fill="#14171c" stroke="none"/>'
+  ].join("")),
+  elephant: medal("#dfe5ff", [
+    '<circle cx="15" cy="30" r="10" fill="#8e9db5"/>',
+    '<circle cx="49" cy="30" r="10" fill="#8e9db5"/>',
+    '<circle cx="32" cy="32" r="15" fill="#a7b4c9"/>',
+    '<path d="M27 38 H37 V47 C37 55 28 57 24 52 C28 53 27 49 27 46 Z" fill="#a7b4c9"/>',
+    '<circle cx="26" cy="29" r="2" fill="#14171c" stroke="none"/>',
+    '<circle cx="38" cy="29" r="2" fill="#14171c" stroke="none"/>'
+  ].join("")),
+  "hex-whiz": medal("#e4dbff", [
+    '<g fill="none" stroke="#14171c" stroke-width="10"><path d="M26 14 L22 50"/><path d="M42 14 L38 50"/><path d="M14 26 H52"/><path d="M12 38 H50"/></g>',
+    '<g fill="none" stroke="#7c5cff" stroke-width="5"><path d="M26 14 L22 50"/><path d="M42 14 L38 50"/><path d="M14 26 H52"/><path d="M12 38 H50"/></g>'
+  ].join("")),
+  copycat: medal("#ffe8c7", [
+    '<path d="M18 30 L17 12 L31 21 Z" fill="#ffb86b"/>',
+    '<path d="M46 30 L47 12 L33 21 Z" fill="#ffb86b"/>',
+    '<circle cx="32" cy="36" r="16" fill="#ffb86b"/>',
+    '<circle cx="26" cy="33" r="2" fill="#14171c" stroke="none"/>',
+    '<circle cx="38" cy="33" r="2" fill="#14171c" stroke="none"/>',
+    '<path d="M30 39 H34 L32 42 Z" fill="#ff5c8a" stroke-width="2"/>',
+    '<path d="M32 42 C32 45 29 46 27 44 M32 42 C32 45 35 46 37 44" fill="none" stroke-width="2"/>',
+    '<path d="M12 38 L21 39 M12 44 L21 42 M52 38 L43 39 M52 44 L43 42" fill="none" stroke-width="2"/>'
+  ].join("")),
+  "palette-pro": medal("#ffd6e9", [
+    '<path d="M13 51 L17 55 L38 31 L33 26 Z" fill="#c68c53"/>',
+    '<path d="M33 26 L38 31 L43 26 L38 21 Z" fill="#bfc6d4"/>',
+    '<path d="M38 21 L43 26 C52 18 54 13 52 10 C46 10 41 14 38 21 Z" fill="#ff4d8d"/>',
+    '<circle cx="17" cy="20" r="4" fill="#ffd43b"/>',
+    '<circle cx="24" cy="14" r="3" fill="#4dabf7"/>'
+  ].join("")),
+  sunset: medal("#ffc9a8", [
+    '<path d="M18 38 A14 14 0 0 1 46 38 Z" fill="#ffd43b"/>',
+    '<path d="M32 14 V19 M17 21 L21 25 M47 21 L43 25 M10 32 H15 M49 32 H54" fill="none" stroke-width="2.5"/>',
+    '<path d="M8 38 H56" fill="none"/>',
+    '<path d="M14 46 H50 M20 53 H44" fill="none"/>'
+  ].join("")),
+  "party-animal": medal("#ffd0e4", [
+    '<path d="M32 12 L47 52 H17 Z" fill="#ff6b9a"/>',
+    '<path d="M25 33 H39 M21.5 43 H42.5" fill="none" stroke="#ffffff" stroke-width="3"/>',
+    '<circle cx="32" cy="12" r="5" fill="#ffd43b"/>',
+    '<circle cx="14" cy="22" r="3" fill="#4dabf7"/>',
+    '<circle cx="51" cy="26" r="3" fill="#3ddc84"/>'
+  ].join("")),
+  "emoji-storm": medal("#bcd6ff", [
+    '<path d="M16 34 C8 34 8 22 18 22 C20 12 36 12 38 22 C48 20 52 34 42 34 Z" fill="#fff"/>',
+    '<circle cx="21" cy="46" r="5" fill="#ffd43b"/>',
+    '<circle cx="32" cy="52" r="5" fill="#ff9fc4"/>',
+    '<circle cx="43" cy="46" r="5" fill="#8be28b"/>',
+    '<circle cx="19.5" cy="45" r="1" fill="#14171c" stroke="none"/><circle cx="22.5" cy="45" r="1" fill="#14171c" stroke="none"/>',
+    '<circle cx="30.5" cy="51" r="1" fill="#14171c" stroke="none"/><circle cx="33.5" cy="51" r="1" fill="#14171c" stroke="none"/>',
+    '<circle cx="41.5" cy="45" r="1" fill="#14171c" stroke="none"/><circle cx="44.5" cy="45" r="1" fill="#14171c" stroke="none"/>',
+    '<path d="M19.5 47.5 Q21 49 22.5 47.5 M30.5 53.5 Q32 55 33.5 53.5 M41.5 47.5 Q43 49 44.5 47.5" fill="none" stroke-width="1.4"/>'
+  ].join("")),
+  lightning: medal("#c6c9ff", [
+    '<path d="M37 8 L19 35 H30 L25 56 L47 26 H35 Z" fill="#ffd43b"/>',
+    '<path d="M12 22 L16 24 M52 40 L48 38 M50 16 L47 19" fill="none" stroke-width="2.5"/>'
+  ].join("")),
+  "daily-dose": medal("#ffd9d9", [
+    '<rect x="11" y="14" width="42" height="40" rx="6" fill="#fff"/>',
+    '<path d="M11 24 V20 A6 6 0 0 1 17 14 H47 A6 6 0 0 1 53 20 V24 Z" fill="#ff6b6b"/>',
+    '<path d="M22 9 V18 M42 9 V18" fill="none"/>',
+    '<rect x="22" y="31" width="20" height="16" rx="3" fill="#4dabf7"/>'
+  ].join("")),
+  wizard: medal("#e8e0ff", [
+    '<path d="M32 8 L47 46 H17 Z" fill="#7c5cff"/>',
+    '<ellipse cx="32" cy="47" rx="22" ry="5.5" fill="#5a3fd0"/>',
+    '<path d="M24 38 H40" fill="none" stroke="#ffd43b" stroke-width="4"/>',
+    '<polygon points="32,18 33.8,22.5 38.5,22.8 34.9,25.8 36.1,30.4 32,27.9 27.9,30.4 29.1,25.8 25.5,22.8 30.2,22.5" fill="#ffd43b" stroke-width="2"/>'
+  ].join("")),
+  explorer: medal("#c8f1da", [
+    '<circle cx="32" cy="32" r="21" fill="#fff"/>',
+    '<path d="M32 14 L38 32 H26 Z" fill="#ff5c5c"/>',
+    '<path d="M32 50 L38 32 H26 Z" fill="#c8cedd"/>',
+    '<circle cx="32" cy="32" r="2.5" fill="#14171c" stroke="none"/>',
+    '<path d="M32 9 V12 M32 52 V55 M9 32 H12 M52 32 H55" fill="none" stroke-width="2.5"/>'
+  ].join("")),
+  typist: medal("#cfe8ff", [
+    '<rect x="7" y="19" width="50" height="30" rx="6" fill="#fff"/>',
+    '<rect x="12" y="24" width="6" height="6" rx="1.5" fill="#4dabf7" stroke-width="2"/>',
+    '<rect x="21" y="24" width="6" height="6" rx="1.5" fill="#e6ecff" stroke-width="2"/>',
+    '<rect x="30" y="24" width="6" height="6" rx="1.5" fill="#4dabf7" stroke-width="2"/>',
+    '<rect x="39" y="24" width="6" height="6" rx="1.5" fill="#e6ecff" stroke-width="2"/>',
+    '<rect x="48" y="24" width="6" height="6" rx="1.5" fill="#4dabf7" stroke-width="2"/>',
+    '<rect x="16" y="33" width="6" height="6" rx="1.5" fill="#e6ecff" stroke-width="2"/>',
+    '<rect x="25" y="33" width="6" height="6" rx="1.5" fill="#4dabf7" stroke-width="2"/>',
+    '<rect x="34" y="33" width="6" height="6" rx="1.5" fill="#e6ecff" stroke-width="2"/>',
+    '<rect x="43" y="33" width="6" height="6" rx="1.5" fill="#4dabf7" stroke-width="2"/>',
+    '<rect x="20" y="42" width="24" height="4" rx="1.5" fill="#e6ecff" stroke-width="2"/>'
+  ].join("")),
+  opposites: medal("#f2f2f2", [
+    '<path d="M32 11 A21 21 0 0 0 32 53 Z" fill="#ff7a2f"/>',
+    '<path d="M32 11 A21 21 0 0 1 32 53 Z" fill="#2f9bff"/>',
+    '<circle cx="22" cy="32" r="4.5" fill="#2f9bff"/>',
+    '<circle cx="42" cy="32" r="4.5" fill="#ff7a2f"/>'
+  ].join(""))
+};
+
+function artSvg(name, size, label) {
+  const inner = ART[name];
+  if (!inner) return "";
+  const id = "gr" + (++artCounter);
+  return '<svg class="art" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="' + size + '" height="' + size + '" ' +
+    (label ? 'role="img" aria-label="' + label + '"' : 'aria-hidden="true"') +
+    '><g stroke="' + INK + '" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">' +
+    inner.replace(/GID/g, id) + '</g></svg>';
+}
+
+// Small line icons for buttons (they take the text color)
+const ICON_PATHS = {
+  dice: '<rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="9" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.2" fill="currentColor" stroke="none"/><circle cx="15" cy="15" r="1.2" fill="currentColor" stroke="none"/>',
+  copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M15 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  unlock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/>',
+  sparkle: '<path d="M12 3l2 7 7 2-7 2-2 7-2-7-7-2 7-2z"/>',
+  rain: '<path d="M7 14a4 4 0 0 1 0-8 5 5 0 0 1 9.5 1A3.5 3.5 0 0 1 17 14z"/><path d="M8 17l-1 3M12 17l-1 3M16 17l-1 3"/>',
+  bolt: '<path d="M13 2L5 13h6l-1 9 8-11h-6z"/>',
+  reset: '<path d="M4 12a8 8 0 1 0 2.7-6"/><path d="M4 4v5h5"/>',
+  swap: '<path d="M5 8h14M15 4l4 4-4 4M19 16H5M9 12l-4 4 4 4"/>'
+};
+function iconSvg(name, size) {
+  size = size || 20;
+  return '<svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="' + size + '" height="' + size +
+    '" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    ICON_PATHS[name] + '</svg>';
+}
+// ART-END
+
+// Fill in every [data-art] and [data-icon] placeholder in the page
+document.querySelectorAll("[data-art]").forEach((el) => { el.innerHTML = artSvg(el.dataset.art, Number(el.dataset.size) || 40); });
+document.querySelectorAll("[data-icon]").forEach((el) => { el.innerHTML = iconSvg(el.dataset.icon); });
+
+// ---------- Helpers ----------
+const $ = (s, r = document) => r.querySelector(s);
+const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
+const rand = () => Math.floor(Math.random() * 256);
+
+const hex2 = (n) => n.toString(16).padStart(2, "0").toUpperCase();          // 255 -> "FF"
+const toHex = (r, g, b) => "#" + hex2(r) + hex2(g) + hex2(b);               // (255,136,0) -> "#FF8800"
+const parse = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); // "#FF8800" -> [255,136,0]
+const randHex = () => toHex(rand(), rand(), rand());
+
+function textOn(h) {                       // black or white text, whichever is readable
+  const [r, g, b] = parse(h);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? "#111111" : "#ffffff";
+}
+
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const k = (n) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return toHex(Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255));
+}
+
+function normalizeHex(text) {              // "abc", "#abc", "aabbcc" -> "#AABBCC" or null
+  let t = text.trim().replace(/^#/, "");
+  if (/^[0-9a-f]{3}$/i.test(t)) t = t.split("").map((c) => c + c).join("");
+  return /^[0-9a-f]{6}$/i.test(t) ? "#" + t.toUpperCase() : null;
+}
+
+function mixHex(h, target, amount) {
+  const a = parse(h), b = parse(target);
+  return toHex(...a.map((v, i) => Math.round(v + (b[i] - v) * amount)));
+}
+
+function shuffle(list) {
+  for (let i = list.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [list[i], list[j]] = [list[j], list[i]];
+  }
+  return list;
+}
+
+function nearby(h) {                       // a color close to another one (tricky wrong answers)
+  const shifted = parse(h).map((v) => {
+    const dir = Math.random() < 0.5 ? -1 : 1;
+    return clamp(v + dir * (25 + Math.floor(Math.random() * 45)), 0, 255);
+  });
+  return toHex(...shifted);
+}
+
+function hexOptions(correct) {
+  const set = new Set([correct]);
+  while (set.size < 4) set.add(Math.random() < 0.6 ? nearby(correct) : randHex());
+  return shuffle([...set]);
+}
+
+const accuracy = (a, b) => {
+  const p = parse(a), q = parse(b);
+  const d = Math.sqrt(p.reduce((sum, v, i) => sum + (v - q[i]) ** 2, 0));
+  return Math.max(0, Math.round(100 - d / 3));
+};
+
+// Saving can fail (private mode), so always try/catch
+function load(key) { try { return Number(localStorage.getItem(key)) || 0; } catch (e) { return 0; } }
+function save(key, value) { try { localStorage.setItem(key, String(value)); } catch (e) {} }
+function loadStr(key) { try { return localStorage.getItem(key) || ""; } catch (e) { return ""; } }
+function saveStr(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
+
+// Date-based random color: the same all day for everyone
+function dailyColor() {
+  const d = new Date();
+  let seed = d.getFullYear() * 372 + (d.getMonth() + 1) * 31 + d.getDate();
+  const next = () => {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  return toHex(Math.floor(next() * 256), Math.floor(next() * 256), Math.floor(next() * 256));
+}
+
+// ---------- Toast ----------
+let toastTimer;
+function toast(text, color, artHtml, ms) {
+  const chip = $("#toast-chip");
+  chip.style.display = color && !artHtml ? "inline-block" : "none";
+  if (color) chip.style.background = color;
+  $("#toast-art").innerHTML = artHtml || "";
+  $("#toast-text").textContent = text;
+  const el = $("#toast");
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), ms || 1400);
+}
+
+// Copy with a fallback for pages where the clipboard API is blocked
+async function copyText(text, statName) {
+  if (statName) bump(statName);          // tapping a copy button counts, even if the browser blocks copying
+  let ok = false;
+  try { await navigator.clipboard.writeText(text); ok = true; } catch (e) {}
+  if (!ok) {
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      ok = document.execCommand("copy");
+      ta.remove();
+    } catch (e) {}
+  }
+  if (ok) toast("Copied " + text, /^#[0-9a-f]{6}$/i.test(text) ? text : "");
+  else toast("Couldn’t copy here. Select the text and copy it yourself.");
+}
+
+// ---------- XP, stats and trophies ----------
+const TITLES = ["Pixel", "Crayon", "Painter", "Colorist", "Hex Wizard", "Rainbow Legend"];
+const LEVEL_XP = 30;
+let xp = load("hx-xp");
+const levelOf = () => 1 + Math.floor(xp / LEVEL_XP);
+const titleOf = (lv) => TITLES[Math.min(lv - 1, TITLES.length - 1)];
+function drawXP() {
+  const lv = levelOf();
+  $("#lvl-title").textContent = "Level " + lv + " " + titleOf(lv);
+  $("#xp-bar").style.width = ((xp % LEVEL_XP) / LEVEL_XP * 100) + "%";
+}
+function addXP(n) {
+  if (n <= 0) return;
+  const before = levelOf();
+  xp += n;
+  save("hx-xp", xp);
+  drawXP();
+  if (levelOf() > before) toast("Level up! You are now a " + titleOf(levelOf()) + ".");
+  checkTrophies();
+}
+
+const stat = (name) => load("hx-s-" + name);
+function bump(name, n) { save("hx-s-" + name, stat(name) + (n || 1)); checkTrophies(); }
+
+const unlocked = new Set(loadStr("hx-trophies").split(",").filter(Boolean));
+const visited = new Set(loadStr("hx-visited").split(",").filter(Boolean));
+const maxStreak = () => Math.max(load("hx-b-namehex"), load("hx-b-whichcolor"), load("hx-b-hexmath"));
+
+const TROPHIES = [
+  { id: "first-steps",  title: "First Steps",      how: "Answer a quiz question right.",            test: () => stat("correct") >= 1 },
+  { id: "hot-streak",   title: "Hot Streak",       how: "Get 5 right in a row.",                    test: () => maxStreak() >= 5 },
+  { id: "unstoppable",  title: "Unstoppable",      how: "Get 15 right in a row.",                   test: () => maxStreak() >= 15 },
+  { id: "century",      title: "Century",          how: "Answer 100 questions right.",              test: () => stat("correct") >= 100 },
+  { id: "bullseye",     title: "Bullseye",         how: "Score 98% or better in Match It.",         test: () => load("hx-b-matchit") >= 98 },
+  { id: "sharp-eye",    title: "Sharp Eye",        how: "Find 10 odd tiles in one round.",          test: () => load("hx-b-oddone") >= 10 },
+  { id: "eagle-eye",    title: "Eagle Eye",        how: "Find 20 odd tiles in one round.",          test: () => load("hx-b-oddone") >= 20 },
+  { id: "elephant",     title: "Elephant Memory",  how: "Average 85% in Color Memory.",             test: () => load("hx-b-memory") >= 85 },
+  { id: "hex-whiz",     title: "Hex Whiz",         how: "Get 10 right in a row in Hex Math.",       test: () => load("hx-b-hexmath") >= 10 },
+  { id: "copycat",      title: "Copycat",          how: "Tap a copy button.",                       test: () => stat("copies") >= 1 },
+  { id: "palette-pro",  title: "Palette Pro",      how: "Make 10 palettes.",                        test: () => stat("palettes") >= 10 },
+  { id: "sunset",       title: "Sunset Maker",     how: "Copy a gradient’s CSS.",                   test: () => stat("gradcopies") >= 1 },
+  { id: "party-animal", title: "Party Animal",     how: "Pop 100 things in Keyboard Party.",        test: () => popped >= 100 },
+  { id: "emoji-storm",  title: "Emoji Storm",      how: "Pop 1,000 things in Keyboard Party.",      test: () => popped >= 1000 },
+  { id: "lightning",    title: "Lightning Rod",    how: "Switch on the strobe lights.",             test: () => stat("strobe") >= 1 },
+  { id: "daily-dose",   title: "Daily Dose",       how: "Open the color of the day.",               test: () => stat("daily") >= 1 },
+  { id: "wizard",       title: "Hex Wizard",       how: "Reach level 5.",                           test: () => levelOf() >= 5 },
+  { id: "explorer",     title: "Explorer",         how: "Visit all ten games.",                     test: () => PLAYABLE.every((g) => visited.has(g.id)) },
+  { id: "typist",       title: "Typist",           how: "Type a hex code into Hex Lab.",            test: () => stat("typed") >= 1 },
+  { id: "opposites",    title: "Opposites Attract", how: "Tap the opposite color in Hex Lab.",      test: () => stat("opp") >= 1 }
+];
+
+function drawTrophyCount() {
+  $("#trophy-count").textContent = unlocked.size + "/" + TROPHIES.length;
+}
+
+let checking = false;
+function checkTrophies() {
+  if (checking) return;
+  checking = true;
+  try {
+    const fresh = [];
+    TROPHIES.forEach((t) => {
+      if (!unlocked.has(t.id) && t.test()) { unlocked.add(t.id); fresh.push(t); }
+    });
+    if (fresh.length) {
+      saveStr("hx-trophies", [...unlocked].join(","));
+      xp += 5 * fresh.length;                 // each trophy is worth 5 XP
+      save("hx-xp", xp);
+      drawXP();
+      drawTrophyCount();
+      if (current === "trophies") drawTrophies();
+      if (fresh.length === 1) toast("Trophy unlocked: " + fresh[0].title, "", artSvg(fresh[0].id, 38), 3200);
+      else toast(fresh.length + " trophies unlocked!", "", artSvg(fresh[0].id, 38), 3200);
+    }
+  } finally { checking = false; }
+}
+
+function drawTrophies() {
+  $("#trophy-summary").textContent = unlocked.size + " of " + TROPHIES.length + " unlocked";
+  $("#trophy-bar").style.width = (unlocked.size / TROPHIES.length * 100) + "%";
+  const grid = $("#trophy-grid");
+  grid.innerHTML = "";
+  TROPHIES.forEach((t) => {
+    const on = unlocked.has(t.id);
+    const card = document.createElement("div");
+    card.className = "trophy " + (on ? "unlocked" : "locked");
+    card.innerHTML = '<div class="trophy-art">' + artSvg(t.id, 88, t.title) + '</div><b>' + t.title + '</b>' +
+      '<span class="how">' + t.how + '</span><span class="status">' + (on ? "Unlocked!" : "Locked") + '</span>';
+    grid.appendChild(card);
+  });
+}
+
+// ---------- Games list and home ----------
+const GAMES = [
+  { id: "mixer",      title: "Hex Lab",        color: "#ff6b6b", blurb: "Mix red, green and blue and watch the hex code change." },
+  { id: "palette",    title: "Palette Party",  color: "#ffa94d", blurb: "Make five-color palettes. Lock the ones you love." },
+  { id: "oddone",     title: "Odd One Out",    color: "#ffd43b", blurb: "Find the tile with the different shade. Race the clock." },
+  { id: "namehex",    title: "Name That Hex",  color: "#69db7c", blurb: "See a color, pick its hex code." },
+  { id: "whichcolor", title: "Which Color?",   color: "#38d9a9", blurb: "See a hex code, pick its color." },
+  { id: "matchit",    title: "Match It",       color: "#4dabf7", blurb: "Mix a color to match the target." },
+  { id: "memory",     title: "Color Memory",   color: "#748ffc", blurb: "Memorize a color, then mix it from memory." },
+  { id: "hexmath",    title: "Hex Math",       color: "#da77f2", blurb: "Turn hex pairs into regular numbers." },
+  { id: "gradient",   title: "Gradient Maker", color: "#f783ac", blurb: "Build a gradient and copy the CSS." },
+  { id: "party",      title: "Keyboard Party", color: "#ff8787", blurb: "Mash the keys. Every emoji. Strobe lights." },
+  { id: "trophies",   title: "Trophy Room",    color: "#ffc078", blurb: "See every trophy you have won and what is left." }
+];
+const PLAYABLE = GAMES.filter((g) => g.id !== "trophies");
+const GAME_BY_ID = {};
+GAMES.forEach((g) => { GAME_BY_ID[g.id] = g; });
+
+function bestText(id) {
+  if (id === "trophies") return unlocked.size + " of " + TROPHIES.length + " unlocked";
+  const labels = {
+    oddone: ["Best: ", " found"], namehex: ["Best streak: ", ""], whichcolor: ["Best streak: ", ""],
+    hexmath: ["Best streak: ", ""], matchit: ["Best match: ", "%"], memory: ["Best average: ", "%"]
+  };
+  const l = labels[id];
+  const best = l ? load("hx-b-" + id) : 0;
+  return best ? l[0] + best + l[1] : "";
+}
+
+function buildHome() {
+  const grid = $("#grid");
+  grid.innerHTML = "";
+  GAMES.forEach((g) => {
+    const a = document.createElement("a");
+    a.className = "card";
+    a.href = "#" + g.id;
+    a.style.setProperty("--tile", g.color);
+    const best = bestText(g.id);
+    a.innerHTML = '<span class="card-top" aria-hidden="true">' + artSvg(g.id, 88) + '</span>' +
+      '<span class="card-body"><b>' + g.title + '</b><span>' + g.blurb + '</span>' +
+      (best ? '<em>' + best + '</em>' : '') + '</span>';
+    grid.appendChild(a);
+  });
+  const c = dailyColor();
+  $("#daily-swatch").style.background = c;
+  $("#daily-hex").textContent = c;
+}
+
+$("#daily-btn").addEventListener("click", () => { bump("daily"); setLab(dailyColor()); location.hash = "mixer"; });
+
+// ---------- Sliders ----------
+function bindSliders(prefix, onChange) {
+  const sliders = ["r", "g", "b"].map((k) => $("#" + prefix + "-" + k));
+  function update() {
+    const v = sliders.map((el) => Number(el.value));
+    ["r", "g", "b"].forEach((k, i) => { $("#" + prefix + "-" + k + "-out").textContent = v[i] + " = " + hex2(v[i]); });
+    onChange(v);
+  }
+  sliders.forEach((el) => el.addEventListener("input", update));
+  update();
+  return {
+    set(hex) {
+      const [r, g, b] = parse(hex);
+      sliders[0].value = r; sliders[1].value = g; sliders[2].value = b;
+      update();
+    }
+  };
+}
+
+// ---------- Hex Lab ----------
+function swatchButton(hex, onClick) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "swatch mono";
+  b.style.background = hex;
+  b.style.color = textOn(hex);
+  b.textContent = hex;
+  b.addEventListener("click", onClick);
+  return b;
+}
+
+function drawLab(h) {
+  const hero = $("#lab-hero");
+  hero.style.background = h;
+  hero.style.color = textOn(h);
+  $("#lab-hex").textContent = h;
+  const input = $("#lab-input");
+  if (document.activeElement !== input) input.value = h;
+
+  const shades = $("#lab-shades");
+  shades.innerHTML = "";
+  [-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6].forEach((t) => {
+    const c = t < 0 ? mixHex(h, "#000000", -t) : mixHex(h, "#FFFFFF", t);
+    shades.appendChild(swatchButton(c, () => setLab(c)));
+  });
+
+  const extra = $("#lab-extra");
+  extra.innerHTML = "";
+  const [r, g, b] = parse(h);
+  const opposite = toHex(255 - r, 255 - g, 255 - b);
+  const gray = Math.round(r * 0.299 + g * 0.587 + b * 0.114);
+  const grayHex = toHex(gray, gray, gray);
+  extra.appendChild(swatchButton(opposite, () => { bump("opp"); setLab(opposite); }));
+  extra.appendChild(swatchButton(grayHex, () => setLab(grayHex)));
+}
+
+const labCtl = bindSliders("lab", (v) => drawLab(toHex(...v)));
+function setLab(hex) { labCtl.set(hex); }
+
+$("#lab-input").addEventListener("input", (e) => {
+  const n = normalizeHex(e.target.value);
+  if (n) { setLab(n); bump("typed"); }
+});
+$("#lab-rand").addEventListener("click", () => setLab(randHex()));
+$("#lab-copy").addEventListener("click", () => copyText($("#lab-hex").textContent, "copies"));
+
+// ---------- Palette Party ----------
+const pal = { colors: [], locked: [false, false, false, false, false], mode: "any" };
+
+function genColor(mode) {
+  const h = Math.random() * 360;
+  if (mode === "pastel") return hslToHex(h, 65 + Math.random() * 25, 78 + Math.random() * 10);
+  if (mode === "neon") return hslToHex(h, 100, 50 + Math.random() * 10);
+  if (mode === "dark") return hslToHex(h, 35 + Math.random() * 35, 12 + Math.random() * 18);
+  return randHex();
+}
+
+function drawPalette() {
+  const box = $("#palette");
+  box.innerHTML = "";
+  pal.colors.forEach((c, i) => {
+    const col = document.createElement("div");
+    col.className = "pcol";
+    const sw = document.createElement("button");
+    sw.type = "button";
+    sw.className = "sw mono";
+    sw.style.background = c;
+    sw.style.color = textOn(c);
+    sw.textContent = c;
+    sw.setAttribute("aria-label", "Copy " + c);
+    sw.addEventListener("click", () => copyText(c, "copies"));
+    const lock = document.createElement("button");
+    lock.type = "button";
+    lock.className = "lock";
+    lock.innerHTML = iconSvg(pal.locked[i] ? "lock" : "unlock", 22);
+    lock.setAttribute("aria-label", pal.locked[i] ? "Unlock color " + (i + 1) : "Lock color " + (i + 1));
+    lock.addEventListener("click", () => { pal.locked[i] = !pal.locked[i]; drawPalette(); });
+    col.appendChild(sw);
+    col.appendChild(lock);
+    box.appendChild(col);
+  });
+}
+
+function genPalette() {
+  for (let i = 0; i < 5; i++) {
+    if (!pal.locked[i] || !pal.colors[i]) pal.colors[i] = genColor(pal.mode);
+  }
+  drawPalette();
+  bump("palettes");
+}
+
+$("#pal-gen").addEventListener("click", genPalette);
+$("#pal-copy").addEventListener("click", () => copyText(pal.colors.join(", "), "copies"));
+document.querySelectorAll("#pal-modes button").forEach((b) => {
+  b.addEventListener("click", () => {
+    pal.mode = b.dataset.mode;
+    document.querySelectorAll("#pal-modes button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    pal.locked = [false, false, false, false, false];
+    genPalette();
+  });
+});
+
+// ---------- Quiz helpers (Name That Hex, Which Color, Hex Math) ----------
+function Score(selector, key) {
+  let score = 0, streak = 0;
+  const el = $(selector);
+  function draw() {
+    el.innerHTML = "<span>Score <b>" + score + "</b></span><span>Streak <b>" + streak +
+      "</b></span><span>Best streak <b>" + load(key) + "</b></span>";
+  }
+  draw();
+  return {
+    right() {
+      score++; streak++;
+      if (streak > load(key)) save(key, streak);
+      addXP(streak >= 5 ? 2 : 1);
+      bump("correct");
+      draw();
+    },
+    wrong() { streak = 0; draw(); },
+    reset() { score = 0; streak = 0; draw(); }
+  };
+}
+
+function lockAnswer(box, correct, picked, score, feedbackSelector, next) {
+  const buttons = [...box.children];
+  buttons.forEach((b) => { b.disabled = true; if (b.dataset.v === correct) b.classList.add("right"); });
+  const fb = $(feedbackSelector);
+  if (picked === correct) {
+    score.right();
+    fb.textContent = "Correct!";
+  } else {
+    score.wrong();
+    buttons.find((b) => b.dataset.v === picked).classList.add("wrong");
+    fb.textContent = "Not quite. The answer was " + correct + ".";
+  }
+  setTimeout(() => { if (current === box.closest(".view").id.slice(2)) { fb.textContent = ""; next(); } }, 1300);
+}
+
+const score1 = Score("#g1-score", "hx-b-namehex");
+function round1() {
+  const color = randHex();
+  $("#g1-stage").style.background = color;
+  const box = $("#g1-options");
+  box.innerHTML = "";
+  hexOptions(color).forEach((h) => {
+    const b = document.createElement("button");
+    b.className = "opt mono";
+    b.type = "button";
+    b.textContent = h;
+    b.dataset.v = h;
+    b.addEventListener("click", () => lockAnswer(box, color, h, score1, "#g1-fb", round1));
+    box.appendChild(b);
+  });
+}
+
+const score2 = Score("#g2-score", "hx-b-whichcolor");
+function round2() {
+  const color = randHex();
+  $("#g2-stage").textContent = color;
+  const box = $("#g2-options");
+  box.innerHTML = "";
+  hexOptions(color).forEach((h, i) => {
+    const b = document.createElement("button");
+    b.className = "opt swatchopt";
+    b.type = "button";
+    b.style.background = h;
+    b.setAttribute("aria-label", "Color option " + (i + 1));
+    b.dataset.v = h;
+    b.addEventListener("click", () => lockAnswer(box, color, h, score2, "#g2-fb", round2));
+    box.appendChild(b);
+  });
+}
+
+const score4 = Score("#g4-score", "hx-b-hexmath");
+function round4() {
+  const n = rand();
+  const swapped = parseInt(hex2(n)[1] + hex2(n)[0], 16);     // digits flipped: a common mistake
+  const set = new Set([String(n), String(swapped)]);
+  while (set.size < 4) set.add(String(clamp(n + (Math.random() < 0.5 ? -1 : 1) * (1 + Math.floor(Math.random() * 20)), 0, 255)));
+  $("#g4-stage").textContent = hex2(n);
+  const box = $("#g4-options");
+  box.innerHTML = "";
+  shuffle([...set]).forEach((value) => {
+    const b = document.createElement("button");
+    b.className = "opt mono";
+    b.type = "button";
+    b.textContent = value;
+    b.dataset.v = value;
+    b.addEventListener("click", () => lockAnswer(box, String(n), value, score4, "#g4-fb", round4));
+    box.appendChild(b);
+  });
+}
+
+// ---------- Odd One Out ----------
+const ODD_TIME = 45;
+const odd = { running: false, score: 0, left: ODD_TIME, timer: null, oddIndex: 0 };
+
+function oddDraw() {
+  $("#odd-score").innerHTML = "<span>Found <b>" + odd.score + "</b></span><span>Best <b>" + load("hx-b-oddone") + "</b></span><span>Time <b>" + odd.left.toFixed(1) + "</b></span>";
+  $("#odd-bar").style.width = (odd.left / ODD_TIME * 100) + "%";
+}
+
+function oddRound() {
+  const size = Math.min(2 + Math.floor(odd.score / 2), 8);
+  const hue = Math.random() * 360;
+  const sat = 55 + Math.random() * 30;
+  const light = 38 + Math.random() * 28;
+  const delta = Math.max(2.5, 22 - odd.score * 1.5);
+  const base = hslToHex(hue, sat, light);
+  const different = hslToHex(hue, sat, light + (light > 52 ? -delta : delta));
+  odd.oddIndex = Math.floor(Math.random() * size * size);
+  const grid = $("#odd-grid");
+  grid.style.gridTemplateColumns = "repeat(" + size + ", 1fr)";
+  grid.innerHTML = "";
+  for (let i = 0; i < size * size; i++) {
+    const tile = document.createElement("button");
+    tile.type = "button";
+    tile.className = "tile";
+    tile.style.background = i === odd.oddIndex ? different : base;
+    tile.setAttribute("aria-label", "Tile " + (i + 1));
+    tile.addEventListener("click", () => oddPick(i));
+    grid.appendChild(tile);
+  }
+}
+
+function oddPick(i) {
+  if (!odd.running) return;
+  if (i === odd.oddIndex) {
+    odd.score++;
+    if (odd.score > load("hx-b-oddone")) { save("hx-b-oddone", odd.score); checkTrophies(); }
+    oddRound();
+  } else {
+    odd.left = Math.max(0, odd.left - 3);
+    const grid = $("#odd-grid");
+    grid.classList.remove("shake");
+    void grid.offsetWidth;
+    grid.classList.add("shake");
+  }
+  oddDraw();
+  if (odd.left <= 0) oddEnd();
+}
+
+function oddStart() {
+  clearInterval(odd.timer);
+  odd.running = true;
+  odd.score = 0;
+  odd.left = ODD_TIME;
+  $("#odd-over").hidden = true;
+  $("#odd-grid").hidden = false;
+  oddRound();
+  oddDraw();
+  odd.timer = setInterval(() => {
+    odd.left = Math.max(0, odd.left - 0.1);
+    oddDraw();
+    if (odd.left <= 0) oddEnd();
+  }, 100);
+}
+
+function oddEnd() {
+  clearInterval(odd.timer);
+  odd.running = false;
+  const best = load("hx-b-oddone");
+  const isBest = odd.score > best;
+  if (isBest) save("hx-b-oddone", odd.score);
+  $("#odd-grid").hidden = true;
+  $("#odd-over").hidden = false;
+  $("#odd-msg").textContent = "Time’s up! You found " + odd.score + (isBest ? ". New best!" : ".");
+  $("#odd-start").textContent = "Play again";
+  oddDraw();
+  addXP(odd.score);
+}
+
+function oddIdle() {
+  clearInterval(odd.timer);
+  odd.running = false;
+  odd.score = 0;
+  odd.left = ODD_TIME;
+  $("#odd-grid").hidden = true;
+  $("#odd-over").hidden = false;
+  $("#odd-msg").textContent = "You get 45 seconds. The tiles start easy and get sneaky.";
+  $("#odd-start").textContent = "Start";
+  oddDraw();
+}
+$("#odd-start").addEventListener("click", oddStart);
+
+// ---------- Match It ----------
+let mTarget = randHex();
+let mMine = "#808080";
+function drawMatchScore() { $("#g3-score").innerHTML = "<span>Best match <b>" + load("hx-b-matchit") + "%</b></span>"; }
+function showMatchTarget() {
+  const t = $("#m-target");
+  t.style.background = mTarget;
+  t.style.color = textOn(mTarget);
+}
+const matchCtl = bindSliders("m", (v) => {
+  mMine = toHex(...v);
+  const m = $("#m-mine");
+  m.style.background = mMine;
+  m.style.color = textOn(mMine);
+});
+$("#m-check").addEventListener("click", () => {
+  const acc = accuracy(mTarget, mMine);
+  if (acc > load("hx-b-matchit")) save("hx-b-matchit", acc);
+  drawMatchScore();
+  $("#g3-fb").textContent = acc + "% match. Target " + mTarget + ", yours " + mMine + ".";
+  addXP(Math.round(acc / 20));
+});
+$("#m-new").addEventListener("click", matchNew);
+function matchNew() {
+  mTarget = randHex();
+  showMatchTarget();
+  matchCtl.set("#808080");
+  $("#g3-fb").textContent = "";
+  drawMatchScore();
+}
+
+// ---------- Color Memory ----------
+const mem = { round: 0, scores: [], target: "#000000", phase: "idle", timers: [] };
+const memCtl = bindSliders("mm", (v) => {
+  const hex = toHex(...v);
+  const m = $("#mem-mine");
+  m.style.background = hex;
+  m.style.color = textOn(hex);
+});
+
+function memClear() { mem.timers.forEach(clearTimeout); mem.timers = []; }
+function memDrawScore() {
+  $("#mem-score").innerHTML = "<span>Round <b>" + Math.max(1, mem.round) + " of 5</b></span><span>Best average <b>" + load("hx-b-memory") + "%</b></span>";
+}
+function memNeutral(label) {
+  const t = $("#mem-target");
+  t.style.background = "var(--bg)";
+  t.style.color = "var(--ink)";
+  t.textContent = label;
+}
+
+function memIdle() {
+  memClear();
+  mem.phase = "idle";
+  mem.round = 0;
+  mem.scores = [];
+  $("#mem-controls").hidden = true;
+  $("#mem-next").hidden = true;
+  $("#mem-start").hidden = false;
+  $("#mem-start").textContent = "Start";
+  $("#mem-bar").style.transition = "none";
+  $("#mem-bar").style.width = "0";
+  memNeutral("?");
+  $("#mem-fb").textContent = "You see a color for a few seconds. Then it disappears and you mix it from memory.";
+  memCtl.set("#808080");
+  memDrawScore();
+}
+
+function memNext() {
+  memClear();
+  mem.round++;
+  mem.target = randHex();
+  mem.phase = "look";
+  const t = $("#mem-target");
+  t.style.background = mem.target;
+  t.style.color = textOn(mem.target);
+  t.textContent = "Memorize it!";
+  $("#mem-controls").hidden = true;
+  $("#mem-next").hidden = true;
+  $("#mem-start").hidden = true;
+  $("#mem-fb").textContent = "";
+  memCtl.set("#808080");
+  memDrawScore();
+  const ms = Math.max(1200, 3200 - mem.round * 400);
+  const bar = $("#mem-bar");
+  bar.style.transition = "none";
+  bar.style.width = "100%";
+  void bar.offsetWidth;
+  bar.style.transition = "width " + ms + "ms linear";
+  bar.style.width = "0%";
+  mem.timers.push(setTimeout(() => {
+    mem.phase = "mix";
+    memNeutral("?");
+    $("#mem-controls").hidden = false;
+  }, ms));
+}
+
+function memCheck() {
+  if (mem.phase !== "mix") return;
+  mem.phase = "result";
+  const mine = toHex(...["r", "g", "b"].map((k) => Number($("#mm-" + k).value)));
+  const acc = accuracy(mem.target, mine);
+  mem.scores.push(acc);
+  const t = $("#mem-target");
+  t.style.background = mem.target;
+  t.style.color = textOn(mem.target);
+  t.textContent = mem.target;
+  $("#mem-controls").hidden = true;
+  let message = "Round " + mem.round + ": " + acc + "% match. Yours was " + mine + ".";
+  let finalAvg = 0;
+  if (mem.round < 5) {
+    $("#mem-next").hidden = false;
+  } else {
+    const avg = Math.round(mem.scores.reduce((a, b) => a + b, 0) / mem.scores.length);
+    const isBest = avg > load("hx-b-memory");
+    if (isBest) save("hx-b-memory", avg);
+    finalAvg = avg;
+    message += " Final average: " + avg + "%" + (isBest ? ". New best!" : ".");
+    $("#mem-start").hidden = false;
+    $("#mem-start").textContent = "Play again";
+  }
+  $("#mem-fb").textContent = message;
+  memDrawScore();
+  if (finalAvg) addXP(Math.round(finalAvg / 10));
+}
+$("#mem-start").addEventListener("click", () => { mem.round = 0; mem.scores = []; memNext(); });
+$("#mem-next").addEventListener("click", memNext);
+$("#mem-check").addEventListener("click", memCheck);
+
+// ---------- Gradient Maker ----------
+const gr = { type: "linear" };
+function grCSS() {
+  const a = $("#gr-a").value.toUpperCase(), b = $("#gr-b").value.toUpperCase();
+  return gr.type === "linear"
+    ? "linear-gradient(" + $("#gr-angle").value + "deg, " + a + ", " + b + ")"
+    : "radial-gradient(circle, " + a + ", " + b + ")";
+}
+function drawGradient() {
+  const css = grCSS();
+  $("#gr-preview").style.background = css;
+  $("#gr-css").textContent = "background: " + css + ";";
+  $("#gr-angle-out").textContent = $("#gr-angle").value + "°";
+}
+["#gr-a", "#gr-b", "#gr-angle"].forEach((id) => $(id).addEventListener("input", drawGradient));
+$("#gr-swap").addEventListener("click", () => {
+  const a = $("#gr-a").value;
+  $("#gr-a").value = $("#gr-b").value;
+  $("#gr-b").value = a;
+  drawGradient();
+});
+$("#gr-rand").addEventListener("click", () => {
+  $("#gr-a").value = randHex().toLowerCase();
+  $("#gr-b").value = randHex().toLowerCase();
+  $("#gr-angle").value = Math.floor(Math.random() * 361);
+  drawGradient();
+});
+$("#gr-copy").addEventListener("click", () => copyText($("#gr-css").textContent, "gradcopies"));
+document.querySelectorAll("#gr-types button").forEach((b) => {
+  b.addEventListener("click", () => {
+    gr.type = b.dataset.gtype;
+    document.querySelectorAll("#gr-types button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    drawGradient();
+  });
+});
+
+// ---------- Keyboard Party: pops, color chaos, strobe ----------
+const root = document.documentElement;
+const setVar = (name, value) => root.style.setProperty(name, value);
+const CHAOS_VARS = ["--bg", "--bg-ink", "--panel", "--ink", "--edge", "--accent", "--accent-ink", "--title", "--glow"];
+const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const backdrop = $("#backdrop");
+const pct = () => Math.floor(Math.random() * 101);
+
+// Build the emoji list from Unicode itself, so we don't have to type every emoji by hand
+function buildEmojiList() {
+  const list = [];
+  const isEmoji = /\p{Emoji}/u;
+  const showsAsEmoji = /\p{Emoji_Presentation}/u;
+  const takesSkinTone = /\p{Emoji_Modifier_Base}/u;
+  const ranges = [[0x203C, 0x3299], [0x1F000, 0x1FAFF]];
+  ranges.forEach(([start, end]) => {
+    for (let cp = start; cp <= end; cp++) {
+      if (cp >= 0x1F1E6 && cp <= 0x1F1FF) continue;          // flag letters are handled below
+      const ch = String.fromCodePoint(cp);
+      if (!isEmoji.test(ch)) continue;
+      list.push(showsAsEmoji.test(ch) ? ch : ch + "\uFE0F");
+      if (takesSkinTone.test(ch)) {
+        for (let tone = 0x1F3FB; tone <= 0x1F3FF; tone++) list.push(ch + String.fromCodePoint(tone));
+      }
+    }
+  });
+  if (typeof Intl.DisplayNames === "function") {              // flags: keep real country codes
+    const regions = new Intl.DisplayNames(["en"], { type: "region" });
+    const retired = new Set(["AN", "BU", "CS", "DD", "FX", "NT", "SU", "TP", "YD", "YU", "ZR", "QO", "XA", "XB"]);
+    for (let a = 65; a <= 90; a++) {
+      for (let b = 65; b <= 90; b++) {
+        const code = String.fromCharCode(a, b);
+        if (retired.has(code)) continue;
+        try {
+          const name = regions.of(code);
+          if (name === code || name === "Unknown Region") continue;
+        } catch (e) { continue; }
+        list.push(String.fromCodePoint(0x1F1E6 + a - 65, 0x1F1E6 + b - 65));
+      }
+    }
+  }
+  return list;
+}
+const EMOJIS = buildEmojiList();
+const randomEmoji = () => EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+const ART_NAMES = Object.keys(ART);
+$("#emoji-count").textContent = EMOJIS.length.toLocaleString() + " emoji and " + ART_NAMES.length + " pieces of art ready.";
+
+// Pops are either emoji or one of the custom art pieces
+let popMode = load("hx-popmode");            // 0 = emoji, 1 = my art
+function fillPop(el, px) {
+  if (popMode === 1) {
+    el.innerHTML = artSvg(ART_NAMES[Math.floor(Math.random() * ART_NAMES.length)], Math.round(px));
+  } else {
+    el.textContent = randomEmoji();
+    el.style.fontSize = Math.round(px * 0.9) + "px";
+  }
+}
+function drawPopModes() {
+  document.querySelectorAll("#pop-modes button").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.pop) === popMode)));
+}
+document.querySelectorAll("#pop-modes button").forEach((b) => {
+  b.addEventListener("click", () => { popMode = Number(b.dataset.pop); save("hx-popmode", popMode); drawPopModes(); });
+});
+
+function currentBg() {
+  const value = getComputedStyle(root).getPropertyValue("--bg").trim();
+  return /^#[0-9a-f]{6}$/i.test(value) ? value : "#e8ecfb";
+}
+
+// Each effect changes something and returns the new color
+const effects = [
+  function newBackground() { const c = randHex(); setVar("--bg", c); setVar("--bg-ink", textOn(c)); return c; },
+  function newPanels() { const c = randHex(); setVar("--panel", c); setVar("--ink", textOn(c)); return c; },
+  function newAccent() { const c = randHex(); setVar("--accent", c); setVar("--accent-ink", textOn(c)); return c; },
+  function newEdge() { const c = randHex(); setVar("--edge", c); return c; },
+  function newBackdrop() {
+    const colors = [randHex(), randHex(), randHex()];
+    backdrop.style.background = colors
+      .map((c) => "radial-gradient(circle at " + pct() + "% " + pct() + "%, " + c + "99, transparent 55%)")
+      .join(", ");
+    if (!calm) backdrop.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 });
+    return colors[0];
+  },
+  function newTitle() {
+    const bgIsLight = textOn(currentBg()) === "#111111";
+    const c = hslToHex(Math.random() * 360, 85, bgIsLight ? 32 : 72);
+    setVar("--title", c);
+    return c;
+  },
+  function newGlow() { const c = randHex(); setVar("--glow", c + "aa"); return c; }
+];
+
+// Colors only change a few times per second, so the page never flashes like a strobe
+let lastChaos = 0;
+function chaos(force) {
+  const now = performance.now();
+  if (!force && now - lastChaos < (calm ? 1000 : 400)) return;
+  lastChaos = now;
+  let last;
+  shuffle(effects.slice()).slice(0, calm ? 2 : 3).forEach((effect) => { last = effect(); });
+  toast(last, last);
+}
+
+function burst(x, y) {
+  for (let i = 0; i < 10; i++) {
+    const dot = document.createElement("div");
+    dot.className = "dot";
+    fillPop(dot, 28);
+    dot.style.left = x + "px";
+    dot.style.top = y + "px";
+    document.body.appendChild(dot);
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 60 + Math.random() * 120;
+    dot.animate([
+      { transform: "translate(0, 0) scale(1)", opacity: 1 },
+      { transform: "translate(" + Math.cos(angle) * distance + "px, " + Math.sin(angle) * distance + "px) scale(0.3)", opacity: 0 }
+    ], { duration: 700 + Math.random() * 500, easing: "ease-out" }).onfinish = () => dot.remove();
+  }
+}
+
+let popped = load("hx-popped");
+function popEmoji(x, y) {
+  const el = document.createElement("div");
+  el.className = "pop";
+  fillPop(el, Math.min(100, window.innerWidth * 0.22));
+  if (x === undefined) {
+    x = window.innerWidth * (0.08 + Math.random() * 0.75);
+    y = window.innerHeight * (0.15 + Math.random() * 0.6);
+  }
+  el.style.left = x + "px";
+  el.style.top = y + "px";
+  document.body.appendChild(el);
+  popped++;
+  save("hx-popped", popped);
+  $("#popped").textContent = popped.toLocaleString();
+  if (popped % 25 === 0) addXP(1);
+  checkTrophies();
+  if (calm) { setTimeout(() => el.remove(), 900); return; }
+  el.animate([
+    { transform: "translateY(0) scale(0.6)", opacity: 1 },
+    { transform: "translateY(-90px) scale(1.4) rotate(" + (Math.random() * 40 - 20) + "deg)", opacity: 0 }
+  ], { duration: 1100, easing: "ease-out" }).onfinish = () => el.remove();
+  burst(x, y);
+}
+
+function popRain() {
+  if (calm) { toast("Rain is off because your device asks for less motion."); return; }
+  let n = 0;
+  const id = setInterval(() => {
+    const el = document.createElement("div");
+    el.className = "pop";
+    fillPop(el, 36 + Math.random() * 44);
+    el.style.left = Math.random() * 100 + "vw";
+    el.style.top = "-90px";
+    document.body.appendChild(el);
+    el.animate([
+      { transform: "translateY(0) rotate(0deg)" },
+      { transform: "translateY(" + (window.innerHeight + 140) + "px) rotate(" + (Math.random() * 540 - 270) + "deg)" }
+    ], { duration: 1800 + Math.random() * 1400, easing: "ease-in" }).onfinish = () => el.remove();
+    if (++n >= 36) clearInterval(id);
+  }, 90);
+}
+
+// Strobe lights: opt-in, at most 3 flashes a second, and it stops by itself after 6 seconds
+const strobeEl = $("#strobe");
+const strobeBtn = $("#strobe-btn");
+const STROBE_LABEL = iconSvg("bolt") + " Strobe (flashing lights)";
+strobeBtn.innerHTML = STROBE_LABEL;
+let strobeTimer = null;
+let strobeStopper = null;
+
+function stopStrobe() {
+  clearInterval(strobeTimer);
+  clearTimeout(strobeStopper);
+  strobeTimer = null;
+  strobeEl.style.opacity = "0";
+  strobeBtn.innerHTML = STROBE_LABEL;
+}
+function startStrobe() {
+  let on = false;
+  strobeBtn.textContent = "Stop strobe";
+  strobeTimer = setInterval(() => {
+    on = !on;
+    if (on) strobeEl.style.background = randHex();
+    strobeEl.style.opacity = on ? "0.5" : "0";
+  }, 170);
+  strobeStopper = setTimeout(stopStrobe, 6000);
+  bump("strobe");
+}
+strobeBtn.addEventListener("click", () => { if (strobeTimer) stopStrobe(); else startStrobe(); });
+if (calm) strobeBtn.hidden = true;     // skip flashing if the device asks for less motion
+
+function resetAll() {
+  CHAOS_VARS.forEach((name) => root.style.removeProperty(name));
+  backdrop.style.background = "";
+  stopStrobe();
+}
+
+$("#surprise").addEventListener("click", () => { popEmoji(); chaos(true); });
+$("#rain").addEventListener("click", popRain);
+$("#reset-colors").addEventListener("click", resetAll);
+$("#party-stage").addEventListener("click", (e) => { popEmoji(e.clientX, e.clientY); chaos(false); });
+
+// ---------- Keyboard ----------
+document.addEventListener("keyup", (e) => {
+  if (e.key === " " && (current === "party" || current === "palette")) e.preventDefault();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;                     // keep shortcuts working
+  const t = e.target;
+  if (t && (t.tagName === "TEXTAREA" || t.tagName === "SELECT" || (t.tagName === "INPUT" && t.type === "text"))) return;
+  if (current === "party") {
+    if (e.key === " ") { e.preventDefault(); if (!e.repeat) resetAll(); return; }   // Space resets the party
+    if (e.repeat || !/^[a-zA-Z]$/.test(e.key)) return;                              // only letters pop things
+    popEmoji();
+    chaos(false);
+  } else if (current === "palette" && e.key === " ") {
+    e.preventDefault();
+    if (!e.repeat) genPalette();
+  }
+});
+
+// ---------- Router ----------
+const VIEWS = ["home", "mixer", "palette", "oddone", "namehex", "whichcolor", "matchit", "memory", "hexmath", "gradient", "party", "trophies"];
+let current = "home";
+
+const INIT = {
+  home: buildHome,
+  mixer: () => {},
+  palette: () => { if (!pal.colors.length) genPalette(); else drawPalette(); },
+  oddone: oddIdle,
+  namehex: () => { score1.reset(); round1(); },
+  whichcolor: () => { score2.reset(); round2(); },
+  matchit: matchNew,
+  memory: memIdle,
+  hexmath: () => { score4.reset(); round4(); },
+  gradient: drawGradient,
+  party: () => { $("#popped").textContent = popped.toLocaleString(); drawPopModes(); },
+  trophies: drawTrophies
+};
+const LEAVE = { oddone: oddIdle, memory: memClear, party: resetAll };
+
+function route() {
+  const name = location.hash.slice(1);
+  const view = VIEWS.includes(name) ? name : "home";
+  if (LEAVE[current]) LEAVE[current]();
+  current = view;
+  VIEWS.forEach((v) => { $("#v-" + v).hidden = v !== view; });
+  document.title = view === "home" ? "Hex Colors" : GAME_BY_ID[view].title + " | Hex Colors";
+  window.scrollTo(0, 0);
+  INIT[view]();
+  if (view !== "home" && !visited.has(view)) {
+    visited.add(view);
+    saveStr("hx-visited", [...visited].join(","));
+    checkTrophies();
+  }
+}
+window.addEventListener("hashchange", route);
+
+drawXP();
+drawTrophyCount();
+route();
+</script>
+</body>
+</html>

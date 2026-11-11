@@ -1,0 +1,45 @@
+HOW TO ADD AN ACHIEVEMENT
+========================
+
+1. Open `index.html` and find `const ART`. Each trophy needs an artwork entry
+	whose key matches its trophy ID. Existing trophy art can be reused; for a
+	new design, add SVG markup using the other entries as examples.
+
+2. Find `BASE_TROPHIES` and add a trophy object. For example:
+
+	{ id: "palette-fan", title: "Palette Fan",
+	  how: "Make 10 palettes.",
+	  test: () => stat("palettes") >= 10 },
+
+	Use a unique `id` and make sure matching artwork exists in `ART`. The `test`
+	function should return true when the player meets the requirement.
+
+3. Ensure the game tracks the requirement. `bump("palettes")` updates a
+	statistic and checks trophies automatically. If tracking a best value with
+	`save(...)`, call `checkTrophies()` after updating it.
+
+4. Base trophies are Starter tier by default. To set a base trophy to Rare,
+	add its ID to `BASE_TIERS`. For a paste-ready example, open `index.html`, find
+	the line starting `const BASE_TIERS =`, and replace that whole line with:
+
+	const BASE_TIERS = { unstoppable: "rare", century: "rare", bullseye: "rare", "eagle-eye": "rare", elephant: "rare", "hex-whiz": "rare", "emoji-storm": "rare", wizard: "rare", "palette-pro": "rare" };
+
+	This makes the existing Palette Pro trophy Rare. Keep the final `};` and
+	include a comma before any additional entry you add.
+
+	For a harder achievement, add it to `HARD_TROPHIES` with a `tier` property.
+	Supported tiers are `rare`, `legendary`, `mythic`, and `secret`; ordinary
+	base trophies use `starter`. XP awards are configured in `TIER_XP`.
+
+5. For a secret trophy, use `tier: "secret"`. Its title and instructions are
+	hidden until unlocked. Set `reveal` if you want to show instructions after
+	unlocking.
+
+6. Save and test in the browser: satisfy the condition, then check the Trophy
+	Room, unlock notification, trophy count, and XP. Trophy totals and sections
+	are calculated automatically from `TROPHIES`.
+
+Tips:
+- Trophy IDs must be unique. Unlocks are stored in local browser storage.
+- Match the wording in `how` to the actual test condition.
+- Existing trophies are only awarded once per browser profile.
